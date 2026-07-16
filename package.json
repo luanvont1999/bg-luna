@@ -10,7 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json",
-    "deploy:vercel": "npm run build && npx firebase deploy --only hosting:$VERCEL_ENV --token \"$FIREBASE_TOKEN\""
+    "deploy:vercel": "npm run build && npx firebase deploy -P $(if [ \"$VERCEL_ENV\" = \"production\" ]; then echo \"production\"; else echo \"development\"; fi) --only hosting --token \"$FIREBASE_TOKEN\""
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.9",
