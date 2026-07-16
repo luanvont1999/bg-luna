@@ -1,19 +1,13 @@
-import { Context } from "hono";
+import { Request, Response } from "express";
 import { sendFCMNotification } from "../models/notification.model.js";
 
-export async function sendNotification(c: Context) {
-  let body: any;
-  try {
-    body = await c.req.json();
-  } catch {
-    c.status(400);
-    return c.json({ error: "Invalid JSON body" });
-  }
+export async function sendNotification(req: Request, res: Response) {
+  const body = req.body;
 
   const { fcmToken, fcmTokens, title, body: bodyText, clickAction } = body;
   if (!title || !bodyText) {
-    c.status(400);
-    return c.json({ error: "Missing required fields (title, body)" });
+    res.status(400).json({ error: "Missing required fields (title, body)" });
+    return;
   }
 
   const tokens: string[] = [];
@@ -21,8 +15,8 @@ export async function sendNotification(c: Context) {
   if (Array.isArray(fcmTokens)) tokens.push(...fcmTokens);
 
   if (tokens.length === 0) {
-    c.status(400);
-    return c.json({ error: "At least one fcmToken or fcmTokens must be provided" });
+    res.status(400).json({ error: "At least one fcmToken or fcmTokens must be provided" });
+    return;
   }
 
   console.log(`[FCM] Sending push notification to ${tokens.length} devices...`);
@@ -39,15 +33,15 @@ export async function sendNotification(c: Context) {
   }
 
   if (sendErrors.length > 0 && sendErrors.length === tokens.length) {
-    c.status(500);
-    return c.json({
+    res.status(500).json({
       success: false,
       warning: "Tất cả các lượt gửi đều thất bại. Vui lòng kiểm tra lại cấu hình hoặc token.",
       errors: sendErrors,
     });
+    return;
   }
 
-  return c.json({
+  res.json({
     success: true,
     message: `Đã gửi thông báo đẩy thành công tới ${tokens.length - sendErrors.length}/${tokens.length} thiết bị!`,
     errors: sendErrors,

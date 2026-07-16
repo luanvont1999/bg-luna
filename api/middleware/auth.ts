@@ -1,4 +1,4 @@
-import { Context, Next } from "hono";
+import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
 export interface FirebaseUser {
@@ -75,28 +75,27 @@ export async function verifyToken(tokenString: string): Promise<FirebaseUser> {
   });
 }
 
-export async function authMiddleware(c: Context, next: Next) {
-  const authHeader = c.req.header("Authorization");
+export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
   if (!authHeader) {
-    c.status(401);
-    return c.json({ error: "Authorization header missing" });
+    res.status(401).json({ error: "Authorization header missing" });
+    return;
   }
 
   const parts = authHeader.split(" ");
   if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer") {
-    c.status(401);
-    return c.json({ error: "Authorization header format must be Bearer <token>" });
+    res.status(401).json({ error: "Authorization header format must be Bearer <token>" });
+    return;
   }
 
   const tokenString = parts[1];
   try {
     const user = await verifyToken(tokenString);
-    c.set("firebase_user", user);
-    await next();
+    (req as any).firebase_user = user;
+    next();
   } catch (err: any) {
     console.error("[Auth] Auth failed:", err);
-    c.status(401);
-    return c.json({
+    res.status(401).json({
       error: "Unauthorized",
       details: err.message,
     });

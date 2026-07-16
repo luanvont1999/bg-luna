@@ -1,56 +1,28 @@
-// Vercel Serverless Function entrypoint
-// All imports are lazy to avoid hanging during module initialization
-import { Hono } from "hono";
-import { cors } from "hono/cors";
-import { handle } from "hono/vercel";
+import express from "express";
+import cors from "cors";
 
-console.log("[api/index] Module loading started");
+import healthRouter from "./routes/health.routes.js";
+import meetupRouter from "./routes/meetup.routes.js";
+import notificationRouter from "./routes/notification.routes.js";
 
-const app = new Hono();
+const app = express();
 
-// Enable CORS for all routes
-app.use(
-  "*",
-  cors({
-    origin: "*",
-    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowHeaders: ["Content-Type", "Authorization"],
-  })
-);
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-console.log("[api/index] Hono app created, importing routes...");
+// Mount routes
+app.use(healthRouter);
+app.use(meetupRouter);
+app.use(notificationRouter);
 
-// Lazy-import routes to avoid module-level side effects from dependencies
-// like jsonwebtoken (native crypto) that can hang Vercel's bundler/runtime
-const routesReady = Promise.all([
-  import("./routes/health.routes.js"),
-  import("./routes/meetup.routes.js"),
-  import("./routes/notification.routes.js"),
-]).then(([health, meetup, notification]) => {
-  app.route("/", health.default);
-  app.route("/", meetup.default);
-  app.route("/", notification.default);
-  console.log("[api/index] All routes mounted successfully");
-});
-
-// Start the Node HTTP server only when running locally
+// Start the Node HTTP server only when running locally (outside Vercel)
 if (!process.env.VERCEL) {
-  routesReady.then(() => {
-    import("@hono/node-server").then(({ serve }) => {
-      const port = 8080;
-      serve({ fetch: app.fetch, port });
-      console.log(`Server Hono/Node.js MVC (Local) đang chạy tại http://localhost:${port}...`);
-    });
+  const port = 8080;
+  app.listen(port, () => {
+    console.log(`Server Express MVC (Local) đang chạy tại http://localhost:${port}...`);
   });
 }
 
-console.log("[api/index] Module loading completed (routes loading async)");
-
 // Vercel serverless function handler
-// Waits for routes to be ready before handling the first request
-const handler = async (req: any, res: any) => {
-  await routesReady;
-  return handle(app)(req, res);
-};
-
-export default handler;
+export default app;

@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Router } from "express";
 import {
   getAllMeetups,
   createMeetup,
@@ -9,7 +9,7 @@ import {
 } from "../controllers/meetup.controller.js";
 import { authMiddleware } from "../middleware/auth.js";
 
-const router = new Hono();
+const router = Router();
 
 router.get("/api/meetups", getAllMeetups);
 router.post("/api/meetups/create", authMiddleware, createMeetup);

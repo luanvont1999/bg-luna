@@ -1,4 +1,4 @@
-import { Context } from "hono";
+import { Request, Response } from "express";
 import { FirebaseUser } from "../middleware/auth.js";
 import {
   meetupStore,
@@ -12,25 +12,19 @@ import {
 import { sendFCMNotification } from "../models/notification.model.js";
 
 // GET /api/meetups
-export async function getAllMeetups(c: Context) {
-  return c.json(meetupStore.getAll());
+export async function getAllMeetups(req: Request, res: Response) {
+  res.json(meetupStore.getAll());
 }
 
 // POST /api/meetups/create
-export async function createMeetup(c: Context) {
-  const user = c.get("firebase_user") as FirebaseUser;
-  let body: any;
-  try {
-    body = await c.req.json();
-  } catch {
-    c.status(400);
-    return c.json({ error: "Invalid JSON body" });
-  }
+export async function createMeetup(req: Request, res: Response) {
+  const user = (req as any).firebase_user as FirebaseUser;
+  const body = req.body;
 
   const { title, game, lat, lng, time } = body;
   if (!title || !game || !lat || !lng || !time) {
-    c.status(400);
-    return c.json({ error: "Missing required fields (title, game, lat, lng, time)" });
+    res.status(400).json({ error: "Missing required fields (title, game, lat, lng, time)" });
+    return;
   }
 
   const colors = ["#bca0f5", "#ffa4b2", "#ffe869", "#ffb875", "#9ee3b2", "#a4f0fd"];
@@ -54,24 +48,17 @@ export async function createMeetup(c: Context) {
   meetupStore.add(newMeetup);
   console.log(`[Meetups] Created new meetup: ${newMeetup.title} by ${newMeetup.host_name}`);
 
-  c.status(201);
-  return c.json(newMeetup);
+  res.status(201).json(newMeetup);
 }
 
 // POST /api/meetups/join
-export async function joinMeetup(c: Context) {
-  let body: any;
-  try {
-    body = await c.req.json();
-  } catch {
-    c.status(400);
-    return c.json({ error: "Invalid JSON body" });
-  }
+export async function joinMeetup(req: Request, res: Response) {
+  const body = req.body;
 
   const { meetupId, userUid, userName, fcmToken } = body;
   if (!meetupId || !userUid || !userName) {
-    c.status(400);
-    return c.json({ error: "Missing required fields" });
+    res.status(400).json({ error: "Missing required fields" });
+    return;
   }
 
   try {
@@ -100,30 +87,23 @@ export async function joinMeetup(c: Context) {
       ).catch((e) => console.error("FCM notify host failed:", e));
     }
 
-    return c.json({
+    res.json({
       success: true,
       message: "Đã gửi yêu cầu tham gia kèo và thông báo tới Host!",
     });
   } catch (err: any) {
-    c.status(500);
-    return c.json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 }
 
 // POST /api/meetups/approve
-export async function approveMember(c: Context) {
-  let body: any;
-  try {
-    body = await c.req.json();
-  } catch {
-    c.status(400);
-    return c.json({ error: "Invalid JSON body" });
-  }
+export async function approveMember(req: Request, res: Response) {
+  const body = req.body;
 
   const { meetupId, playerUid } = body;
   if (!meetupId || !playerUid) {
-    c.status(400);
-    return c.json({ error: "Missing required fields" });
+    res.status(400).json({ error: "Missing required fields" });
+    return;
   }
 
   try {
@@ -152,30 +132,23 @@ export async function approveMember(c: Context) {
       ).catch((e) => console.error("FCM notify player failed:", e));
     }
 
-    return c.json({
+    res.json({
       success: true,
       message: "Đã duyệt thành viên và gửi thông báo!",
     });
   } catch (err: any) {
-    c.status(500);
-    return c.json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 }
 
 // POST /api/meetups/confirm
-export async function confirmParticipation(c: Context) {
-  let body: any;
-  try {
-    body = await c.req.json();
-  } catch {
-    c.status(400);
-    return c.json({ error: "Invalid JSON body" });
-  }
+export async function confirmParticipation(req: Request, res: Response) {
+  const body = req.body;
 
   const { meetupId, userUid, userName } = body;
   if (!meetupId || !userUid || !userName) {
-    c.status(400);
-    return c.json({ error: "Missing required fields" });
+    res.status(400).json({ error: "Missing required fields" });
+    return;
   }
 
   try {
@@ -216,30 +189,23 @@ export async function confirmParticipation(c: Context) {
       }
     }
 
-    return c.json({
+    res.json({
       success: true,
       message: "Đã xác nhận vào kèo chính thức và thông báo tới mọi người!",
     });
   } catch (err: any) {
-    c.status(500);
-    return c.json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 }
 
 // POST /api/meetups/leave
-export async function leaveOrKickMember(c: Context) {
-  let body: any;
-  try {
-    body = await c.req.json();
-  } catch {
-    c.status(400);
-    return c.json({ error: "Invalid JSON body" });
-  }
+export async function leaveOrKickMember(req: Request, res: Response) {
+  const body = req.body;
 
   const { meetupId, playerUid, playerName, isKick } = body;
   if (!meetupId || !playerUid || !playerName) {
-    c.status(400);
-    return c.json({ error: "Missing required fields" });
+    res.status(400).json({ error: "Missing required fields" });
+    return;
   }
 
   try {
@@ -321,12 +287,11 @@ export async function leaveOrKickMember(c: Context) {
       }
     }
 
-    return c.json({
+    res.json({
       success: true,
       message: "Đã xử lý rời kèo/kick và gửi thông báo thành công!",
     });
   } catch (err: any) {
-    c.status(500);
-    return c.json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 }

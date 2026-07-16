@@ -1,16 +1,16 @@
-import { Context } from "hono";
+import { Request, Response } from "express";
 import { FirebaseUser } from "../middleware/auth.js";
 
-export async function getHealth(c: Context) {
-  return c.json({
+export async function getHealth(req: Request, res: Response) {
+  res.json({
     status: "OK",
-    message: "Boardgame Luna API Node/Hono is running smoothly",
+    message: "Boardgame Luna API Node/Express is running smoothly",
   });
 }
 
-export async function getProfile(c: Context) {
-  const user = c.get("firebase_user") as FirebaseUser;
-  return c.json({
+export async function getProfile(req: Request, res: Response) {
+  const user = (req as any).firebase_user as FirebaseUser;
+  res.json({
     message: "Kết nối API xác thực thành công!",
     user,
   });
