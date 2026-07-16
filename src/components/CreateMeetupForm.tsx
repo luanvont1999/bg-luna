@@ -4,6 +4,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../libs/firebase";
 import { navigate } from "../libs/router";
 import Icon from "./Icon";
+import { getMeetupCity } from "../utils/geo";
 
 interface Props {
   selectedLat: number | null;
@@ -240,6 +241,7 @@ export default function CreateMeetupForm({
         hostUid: user.uid,
         lat,
         lng,
+        city: getMeetupCity({ lat, lng }),
         playersCount: 1,
         playersNeeded: Number(playersNeeded) || 4,
         approvedUids: [user.uid],

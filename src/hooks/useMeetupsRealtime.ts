@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, setDoc, query, where } from "firebase/firestore";
 import { db, auth } from "../libs/firebase";
+import { calculateDistance, getMeetupCity } from "../utils/geo";
 
 const SEED_MEETUPS = [
   {
@@ -15,6 +16,7 @@ const SEED_MEETUPS = [
     playersNeeded: 15,
     time: "2026-07-10T19:30",
     color: "#bca0f5",
+    city: "HCM" as const,
   },
   {
     id: "2",
@@ -28,6 +30,7 @@ const SEED_MEETUPS = [
     playersNeeded: 5,
     time: "2026-07-11T15:00",
     color: "#ffa4b2",
+    city: "HCM" as const,
   },
   {
     id: "3",
@@ -41,6 +44,7 @@ const SEED_MEETUPS = [
     playersNeeded: 6,
     time: "2026-07-12T18:00",
     color: "#ffe869",
+    city: "HCM" as const,
   },
   {
     id: "4",
@@ -54,6 +58,7 @@ const SEED_MEETUPS = [
     playersNeeded: 4,
     time: "2026-07-11T19:00",
     color: "#9ee3b2",
+    city: "HN" as const,
   },
   {
     id: "5",
@@ -67,19 +72,35 @@ const SEED_MEETUPS = [
     playersNeeded: 10,
     time: "2026-07-12T14:30",
     color: "#a4f0fd",
+    city: "HN" as const,
   },
 ];
 
-export function useMeetupsRealtime() {
+export function useMeetupsRealtime(
+  selectedCities?: ("HCM" | "HN" | "OTHER")[],
+  selectedDistance: string = "all",
+  userLat: number | null = null,
+  userLng: number | null = null
+) {
   const [allMeetups, setAllMeetups] = useState<any[]>([]);
   const [hasLoadedInitialMeetups, setHasLoadedInitialMeetups] = useState<boolean>(false);
 
+  const citiesKey = selectedCities ? JSON.stringify(selectedCities) : "";
+
   useEffect(() => {
+    let q: any = collection(db, "meetups");
+    
+    // Server-side Firestore query for cities if specified
+    if (selectedCities && selectedCities.length > 0) {
+      q = query(collection(db, "meetups"), where("city", "in", selectedCities));
+    }
+
     const unsubscribe = onSnapshot(
-      collection(db, "meetups"),
+      q,
       async (snapshot) => {
         try {
           if (snapshot.empty) {
+            // Seed logic
             if (auth.currentUser) {
               for (const seed of SEED_MEETUPS) {
                 try {
@@ -92,7 +113,26 @@ export function useMeetupsRealtime() {
               setAllMeetups(SEED_MEETUPS);
             }
           } else {
-            setAllMeetups(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+            const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+            
+            // Client-side filtering for distance limits (cannot be queried natively in Firestore)
+            const filtered = list.filter((m: any) => {
+              // Backward-compatibility: if doc doesn't have city, calculate on the fly for safety
+              if (selectedCities && selectedCities.length > 0 && !m.city) {
+                const calculatedCity = getMeetupCity(m);
+                if (!selectedCities.includes(calculatedCity)) return false;
+              }
+              
+              if (selectedDistance !== "all" && userLat !== null && userLng !== null) {
+                const lat = m.lat !== undefined ? m.lat : 0;
+                const lng = m.lng !== undefined ? m.lng : 0;
+                const dist = calculateDistance(userLat, userLng, lat, lng);
+                return dist <= parseFloat(selectedDistance);
+              }
+              return true;
+            });
+
+            setAllMeetups(filtered);
           }
         } catch (e) {
           console.error("[Firestore] snapshot process error:", e);
@@ -109,7 +149,7 @@ export function useMeetupsRealtime() {
     );
 
     return unsubscribe;
-  }, []);
+  }, [citiesKey, selectedDistance, userLat, userLng]);
 
   return { allMeetups, isLoading: !hasLoadedInitialMeetups };
 }

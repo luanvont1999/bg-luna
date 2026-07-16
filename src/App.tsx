@@ -110,20 +110,13 @@ export default function App() {
     localStorage.setItem("filter_distance", selectedDistance);
   }, [selectedCities, selectedDistance]);
 
-  // Derived filtered meetups list
-  const filteredMeetups = useMemo(() => {
-    return allMeetups.filter((m) => {
-      if (selectedCities.length > 0) {
-        const city = getMeetupCity(m);
-        if (!selectedCities.includes(city)) return false;
-      }
-      if (selectedDistance !== "all" && userLat !== null && userLng !== null) {
-        const dist = calculateDistance(userLat, userLng, m.lat, m.lng);
-        if (dist > parseFloat(selectedDistance)) return false;
-      }
-      return true;
-    });
-  }, [allMeetups, selectedCities, selectedDistance, userLat, userLng]);
+  // Fetch filtered meetups directly using active database queries when possible
+  const { allMeetups: filteredMeetups, isLoading: isFilteredLoading } = useMeetupsRealtime(
+    selectedCities,
+    selectedDistance,
+    userLat,
+    userLng
+  );
 
   // Total pending requests
   const totalPendingRequests = useMemo(() => {
@@ -234,7 +227,7 @@ export default function App() {
             userLng={userLng}
             isTrackingGPS={isTrackingGPS}
             gpsError={gpsError}
-            isLoading={isMeetupsLoading}
+            isLoading={isFilteredLoading}
           />
         );
       case "create":

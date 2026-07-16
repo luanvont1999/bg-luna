@@ -19,7 +19,8 @@ export default function FilterRoute({
   gpsError,
   onApply,
 }: Props) {
-  const [tempCities, setTempCities] = useState<("HCM" | "HN" | "OTHER")[]>(selectedCities);
+  const [tempCities, setTempCities] =
+    useState<("HCM" | "HN" | "OTHER")[]>(selectedCities);
   const [tempDistance, setTempDistance] = useState<string>(selectedDistance);
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function FilterRoute({
 
   function toggleCity(city: "HCM" | "HN" | "OTHER") {
     setTempCities((prev) =>
-      prev.includes(city) ? prev.filter((c) => c !== city) : [...prev, city]
+      prev.includes(city) ? prev.filter((c) => c !== city) : [...prev, city],
     );
   }
 
@@ -51,11 +52,8 @@ export default function FilterRoute({
         </button>
         <div className="nav-title-group">
           <h2 className="text-lg font-bold flex items-center gap-1.5 m-0">
-            <Icon name="filter" size={20} /> Tùy Chỉnh Bộ Lọc Tìm Kiếm
+            <Icon name="filter" size={24} /> Tùy Chỉnh
           </h2>
-          <span className="sub-title text-xs font-semibold text-[#1e1e24]">
-            Chọn khu vực thành phố và bán kính vị trí
-          </span>
         </div>
       </div>
 
@@ -70,7 +68,7 @@ export default function FilterRoute({
             {[
               { id: "HN", name: "Hà Nội", icon: "landmark" },
               { id: "HCM", name: "Hồ Chí Minh", icon: "building" },
-              { id: "OTHER", name: "Khác", icon: "compass" }
+              { id: "OTHER", name: "Khác", icon: "compass" },
             ].map((city) => {
               const isSelected = tempCities.includes(city.id as any);
               return (
@@ -85,10 +83,18 @@ export default function FilterRoute({
                 >
                   {/* Custom Checkbox Square */}
                   <div className="w-5 h-5 border-3 border-[#1e1e24] bg-white rounded flex items-center justify-center shrink-0">
-                    {isSelected && <Icon name="check" size={12} className="text-[#1e1e24] font-bold" />}
+                    {isSelected && (
+                      <Icon
+                        name="check"
+                        size={12}
+                        className="text-[#1e1e24] font-bold"
+                      />
+                    )}
                   </div>
                   <Icon name={city.icon} size={16} />
-                  <span className="font-extrabold text-sm text-[#1e1e24]">{city.name}</span>
+                  <span className="font-extrabold text-sm text-[#1e1e24]">
+                    {city.name}
+                  </span>
                 </div>
               );
             })}
@@ -106,7 +112,7 @@ export default function FilterRoute({
               { id: "5", name: "Trong vòng 5 km" },
               { id: "10", name: "Trong vòng 10 km" },
               { id: "20", name: "Trong vòng 20 km" },
-              { id: "all", name: "Không giới hạn" }
+              { id: "all", name: "Không giới hạn" },
             ].map((opt) => {
               const isSelected = tempDistance === opt.id;
               const isDisabled = opt.id !== "all" && userLat === null;
@@ -117,16 +123,20 @@ export default function FilterRoute({
                     isDisabled
                       ? "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed shadow-none"
                       : isSelected
-                      ? "bg-[#9ee3b2] translate-x-[2px] translate-y-[2px] shadow-[1px_1px_0px_#1e1e24] cursor-pointer"
-                      : "bg-white shadow-[4px_4px_0px_#1e1e24] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_#1e1e24] cursor-pointer"
+                        ? "bg-[#9ee3b2] translate-x-[2px] translate-y-[2px] shadow-[1px_1px_0px_#1e1e24] cursor-pointer"
+                        : "bg-white shadow-[4px_4px_0px_#1e1e24] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_#1e1e24] cursor-pointer"
                   }`}
                   onClick={() => !isDisabled && setTempDistance(opt.id)}
                 >
                   {/* Custom Radio Circle */}
-                  <div className={`w-5 h-5 border-3 rounded-full bg-white flex items-center justify-center shrink-0 ${
-                    isDisabled ? "border-gray-300" : "border-[#1e1e24]"
-                  }`}>
-                    {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#1e1e24]" />}
+                  <div
+                    className={`w-5 h-5 border-3 rounded-full bg-white flex items-center justify-center shrink-0 ${
+                      isDisabled ? "border-gray-300" : "border-[#1e1e24]"
+                    }`}
+                  >
+                    {isSelected && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#1e1e24]" />
+                    )}
                   </div>
                   <span className="font-extrabold text-sm">{opt.name}</span>
                 </div>
@@ -136,7 +146,8 @@ export default function FilterRoute({
 
           {userLat === null && (
             <p className="gps-warning-hint text-xs font-bold text-[#dc2626] mt-1 flex items-center gap-1.5">
-              <Icon name="alert-triangle" size={14} /> Cần bật vị trí (GPS) để lọc theo bán kính km.
+              <Icon name="alert-triangle" size={14} /> Cần bật vị trí (GPS) để
+              lọc theo bán kính km.
             </p>
           )}
         </div>
