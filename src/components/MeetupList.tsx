@@ -39,8 +39,8 @@ interface Meetup {
 
 interface Props {
   meetups: Meetup[];
-  selectedCity: "all" | "HCM" | "HN";
-  selectedDistance: "all" | "5" | "10";
+  selectedCities: ("HCM" | "HN" | "OTHER")[];
+  selectedDistance: string;
   userLat: number | null;
   userLng: number | null;
   isTrackingGPS: boolean;
@@ -51,7 +51,7 @@ interface Props {
 
 export default function MeetupList({
   meetups,
-  selectedCity,
+  selectedCities,
   selectedDistance,
   userLat,
   userLng,

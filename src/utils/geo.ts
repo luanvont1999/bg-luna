@@ -17,8 +17,11 @@ export function calculateDistance(
   return R * c;
 }
 
-export function getMeetupCity(meetup: { lat: number; lng: number }): "HCM" | "HN" {
+export function getMeetupCity(meetup: { lat: number; lng: number }): "HCM" | "HN" | "OTHER" {
   const distToHCM = calculateDistance(meetup.lat, meetup.lng, 10.7769, 106.7009);
   const distToHN = calculateDistance(meetup.lat, meetup.lng, 21.0285, 105.8542);
+  if (distToHCM > 50 && distToHN > 50) {
+    return "OTHER";
+  }
   return distToHN < distToHCM ? "HN" : "HCM";
 }

@@ -30,8 +30,8 @@ interface Props {
   meetups: Meetup[];
   userLat: number | null;
   userLng: number | null;
-  selectedCity: "all" | "HCM" | "HN";
-  selectedDistance: "all" | "5" | "10";
+  selectedCities: ("HCM" | "HN" | "OTHER")[];
+  selectedDistance: string;
   isTrackingGPS: boolean;
   gpsError: boolean;
   isLoading?: boolean;
@@ -41,7 +41,7 @@ export default function MyMeetupsRoute({
   meetups,
   userLat,
   userLng,
-  selectedCity = "all",
+  selectedCities = [],
   selectedDistance = "all",
   isTrackingGPS,
   gpsError,
@@ -141,11 +141,10 @@ export default function MyMeetupsRoute({
             meetups={myMeetups}
             userLat={userLat}
             userLng={userLng}
-            selectedCity={selectedCity}
+            selectedCities={selectedCities}
             selectedDistance={selectedDistance}
             isTrackingGPS={isTrackingGPS}
             gpsError={gpsError}
-            showFilterBar={false}
             isLoading={isLoading}
           />
         </>

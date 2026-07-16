@@ -70,13 +70,20 @@ export default function App() {
   const [createAddressText, setCreateAddressText] = useState<string>("");
 
   // GPS + Filter shared state
-  const [selectedCity, setSelectedCity] = useState<"all" | "HCM" | "HN">(() => {
-    const saved = localStorage.getItem("filter_city");
-    return ["all", "HCM", "HN"].includes(saved || "") ? (saved as any) : "all";
+  const [selectedCities, setSelectedCities] = useState<("HCM" | "HN" | "OTHER")[]>(() => {
+    try {
+      const saved = localStorage.getItem("filter_cities");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error("Error parsing filter_cities:", e);
+    }
+    return [];
   });
-  const [selectedDistance, setSelectedDistance] = useState<"all" | "5" | "10">(() => {
-    const saved = localStorage.getItem("filter_distance");
-    return ["all", "5", "10"].includes(saved || "") ? (saved as any) : "all";
+  const [selectedDistance, setSelectedDistance] = useState<string>(() => {
+    return localStorage.getItem("filter_distance") || "all";
   });
 
   // GPS Tracker hook
@@ -99,21 +106,24 @@ export default function App() {
 
   // Sync city & distance filters
   useEffect(() => {
-    localStorage.setItem("filter_city", selectedCity);
+    localStorage.setItem("filter_cities", JSON.stringify(selectedCities));
     localStorage.setItem("filter_distance", selectedDistance);
-  }, [selectedCity, selectedDistance]);
+  }, [selectedCities, selectedDistance]);
 
   // Derived filtered meetups list
   const filteredMeetups = useMemo(() => {
     return allMeetups.filter((m) => {
-      if (selectedCity !== "all" && getMeetupCity(m) !== selectedCity) return false;
+      if (selectedCities.length > 0) {
+        const city = getMeetupCity(m);
+        if (!selectedCities.includes(city)) return false;
+      }
       if (selectedDistance !== "all" && userLat !== null && userLng !== null) {
         const dist = calculateDistance(userLat, userLng, m.lat, m.lng);
         if (dist > parseFloat(selectedDistance)) return false;
       }
       return true;
     });
-  }, [allMeetups, selectedCity, selectedDistance, userLat, userLng]);
+  }, [allMeetups, selectedCities, selectedDistance, userLat, userLng]);
 
   // Total pending requests
   const totalPendingRequests = useMemo(() => {
@@ -218,7 +228,7 @@ export default function App() {
           <FindRoute
             meetups={allMeetups}
             filteredMeetups={filteredMeetups}
-            selectedCity={selectedCity}
+            selectedCities={selectedCities}
             selectedDistance={selectedDistance}
             userLat={userLat}
             userLng={userLng}
@@ -256,7 +266,7 @@ export default function App() {
             meetups={allMeetups}
             userLat={userLat}
             userLng={userLng}
-            selectedCity={selectedCity}
+            selectedCities={selectedCities}
             selectedDistance={selectedDistance}
             isTrackingGPS={isTrackingGPS}
             gpsError={gpsError}
@@ -284,13 +294,13 @@ export default function App() {
       case "filter":
         return (
           <FilterRoute
-            selectedCity={selectedCity}
+            selectedCities={selectedCities}
             selectedDistance={selectedDistance}
             userLat={userLat}
             isTrackingGPS={isTrackingGPS}
             gpsError={gpsError}
-            onApply={(city, dist) => {
-              setSelectedCity(city);
+            onApply={(cities, dist) => {
+              setSelectedCities(cities);
               setSelectedDistance(dist);
             }}
           />
@@ -304,7 +314,7 @@ export default function App() {
           <FindRoute
             meetups={allMeetups}
             filteredMeetups={filteredMeetups}
-            selectedCity={selectedCity}
+            selectedCities={selectedCities}
             selectedDistance={selectedDistance}
             userLat={userLat}
             userLng={userLng}
