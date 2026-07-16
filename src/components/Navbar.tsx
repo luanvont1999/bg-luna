@@ -1,0 +1,113 @@
+import React from "react";
+import Icon from "./Icon";
+import { navigateToTab, RouteParams } from "../libs/router";
+
+interface Props {
+  route: RouteParams;
+  totalPendingRequests: number;
+  deferredPrompt: any;
+  isIOS: boolean;
+  isStandalone: boolean;
+  onTriggerInstall: () => void;
+}
+
+export default function Navbar({
+  route,
+  totalPendingRequests,
+  deferredPrompt,
+  isIOS,
+  isStandalone,
+  onTriggerInstall,
+}: Props) {
+  return (
+    <header className="navbar">
+      <div className="container navbar-container">
+        <div className="logo">
+          <svg
+            className="logo-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" fill="currentColor" />
+            <circle cx="8" cy="8" r="1.5" fill="#fff" />
+            <circle cx="16" cy="16" r="1.5" fill="#fff" />
+            <circle cx="16" cy="8" r="1.5" fill="#fff" />
+            <circle cx="8" cy="16" r="1.5" fill="#fff" />
+            <circle cx="12" cy="12" r="1.5" fill="#fff" />
+          </svg>
+          <span>Boardgame Luna</span>
+        </div>
+
+        <ul className="nav-links">
+          <li>
+            <button
+              className={`nav-link ${route.name === "find" ? "active" : ""}`}
+              onClick={() => navigateToTab("find")}
+            >
+              Tìm kèo
+            </button>
+          </li>
+          <li>
+            <button
+              className={`nav-link ${route.name === "my-meetups" ? "active" : ""}`}
+              onClick={() => navigateToTab("my-meetups")}
+            >
+              Các kèo
+            </button>
+          </li>
+          <li>
+            <button
+              className={`nav-link ${route.name === "chats" ? "active" : ""}`}
+              onClick={() => navigateToTab("chats")}
+            >
+              Trò chuyện
+            </button>
+          </li>
+          <li>
+            <button
+              className={`nav-link ${route.name === "create" ? "active" : ""}`}
+              onClick={() => navigateToTab("create")}
+            >
+              Lên kèo
+              {totalPendingRequests > 0 && <span className="nav-badge">{totalPendingRequests}</span>}
+            </button>
+          </li>
+          <li>
+            <button
+              className={`nav-link ${route.name === "profile" ? "active" : ""}`}
+              onClick={() => navigateToTab("profile")}
+            >
+              Hồ sơ
+            </button>
+          </li>
+        </ul>
+
+        <div className="desktop-nav-btn flex gap-2.5">
+          {(deferredPrompt || (isIOS && !isStandalone)) && (
+            <button
+              className="btn btn-primary"
+              style={{
+                backgroundColor: "var(--pastel-yellow, #ffe869)",
+                color: "#1e1e24",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+              onClick={onTriggerInstall}
+            >
+              <Icon name="smartphone" size={16} />
+              <span>Tải App</span>
+            </button>
+          )}
+          <button className="btn btn-primary" onClick={() => navigateToTab("profile")}>
+            Tài khoản
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}

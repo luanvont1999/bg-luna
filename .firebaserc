@@ -1,0 +1,17 @@
+{
+  "projects": {
+    "default": "bg-luna-prod"
+  },
+  "targets": {
+    "bg-luna-prod": {
+      "hosting": {
+        "production": [
+          "bg-luna-prod"
+        ],
+        "preview": [
+          "bg-luna-prod-dev"
+        ]
+      }
+    }
+  }
+}
