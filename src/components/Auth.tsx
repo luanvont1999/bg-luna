@@ -124,7 +124,7 @@ export default function Auth() {
             <h3>Firebase Chưa Được Cấu Hình!</h3>
           </div>
           <p className="mb-3 text-sm">
-            Bạn cần cập nhật cấu hình Firebase thật của mình bằng cách tạo file <code>.env</code> trong thư mục <code>frontend/</code> và thêm các khóa sau:
+            Bạn cần cấu hình các biến môi trường Firebase. Đối với local dev, hãy tạo file <code>.env</code> (hoặc <code>.env.development</code>) ở thư mục gốc của dự án. Đối với Vercel, hãy cấu hình các biến này trong phần <strong>Settings &gt; Environment Variables</strong> trên Vercel Dashboard. Các khóa cần cấu hình:
           </p>
           <pre className="bg-[rgba(255,255,255,0.5)] border-2 border-[#ef4444] p-3 rounded-md font-mono text-[0.85rem] my-3 overflow-x-auto">
             <code>
