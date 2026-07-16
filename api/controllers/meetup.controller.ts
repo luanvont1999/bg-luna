@@ -9,7 +9,7 @@ import {
   deleteFirestoreRequest,
   Meetup,
 } from "../models/meetup.model.js";
-import { sendFCMNotification } from "../models/notification.model.js";
+import { sendFCMNotification, getUserFCMToken } from "../models/notification.model.js";
 
 // GET /api/meetups
 export async function getAllMeetups(req: Request, res: Response) {
@@ -55,7 +55,7 @@ export async function createMeetup(req: Request, res: Response) {
 export async function joinMeetup(req: Request, res: Response) {
   const body = req.body;
 
-  const { meetupId, userUid, userName, fcmToken } = body;
+  const { meetupId, userUid, userName } = body;
   if (!meetupId || !userUid || !userName) {
     res.status(400).json({ error: "Missing required fields" });
     return;
@@ -70,21 +70,21 @@ export async function joinMeetup(req: Request, res: Response) {
     if (!meetup.pendingUids.includes(userUid)) {
       meetup.pendingUids.push(userUid);
     }
-    if (fcmToken) {
-      meetup.userFcmTokens[userUid] = fcmToken;
-    }
 
-    await updateFirestoreMeetup(meetup, ["pendingUids", "userFcmTokens"]);
+    await updateFirestoreMeetup(meetup, ["pendingUids"]);
 
-    // 3. Send Notification to Host
-    if (meetup.hostFcmToken) {
-      const bodyText = `${userName} muốn xin vào kèo "${meetup.title}" chơi game ${meetup.game} của bạn.`;
-      sendFCMNotification(
-        meetup.hostFcmToken,
-        "🎯 Yêu cầu tham gia kèo mới!",
-        bodyText,
-        `/#/manage/${meetupId}`
-      ).catch((e) => console.error("FCM notify host failed:", e));
+    // 3. Send Notification to Host (Get token dynamically)
+    if (meetup.hostUID) {
+      const hostToken = await getUserFCMToken(meetup.hostUID);
+      if (hostToken) {
+        const bodyText = `${userName} muốn xin vào kèo "${meetup.title}" chơi game ${meetup.game} của bạn.`;
+        sendFCMNotification(
+          hostToken,
+          "🎯 Yêu cầu tham gia kèo mới!",
+          bodyText,
+          `/#/manage/${meetupId}`
+        ).catch((e) => console.error("FCM notify host failed:", e));
+      }
     }
 
     res.json({
@@ -119,8 +119,8 @@ export async function approveMember(req: Request, res: Response) {
 
     await updateFirestoreMeetup(meetup, ["approvedPendingUids", "pendingUids"]);
 
-    // 3. Send Push Notification to Player
-    const playerToken = meetup.userFcmTokens[playerUid];
+    // 3. Send Push Notification to Player (Get token dynamically)
+    const playerToken = await getUserFCMToken(playerUid);
     if (playerToken) {
       const host = meetup.hostName || "Host";
       const bodyText = `Bạn đã được duyệt tham gia kèo "${meetup.title}" chơi game ${meetup.game} của ${host}! Hãy xác nhận tham gia kèo chính thức.`;
@@ -175,18 +175,17 @@ export async function confirmParticipation(req: Request, res: Response) {
 
     const bodyText = `${userName} đã xác nhận tham gia kèo "${meetup.title}" chơi game ${meetup.game}.`;
     for (const uid of targets) {
-      let token = meetup.userFcmTokens[uid];
-      if (!token && uid === meetup.hostUID) {
-        token = meetup.hostFcmToken;
-      }
-      if (token) {
-        sendFCMNotification(
-          token,
-          "➕ Kèo có thêm người chơi mới!",
-          bodyText,
-          `/#/manage/${meetupId}`
-        ).catch((e) => console.error("FCM notify confirmed user failed:", e));
-      }
+      // Get token dynamically for each member
+      getUserFCMToken(uid).then((token) => {
+        if (token) {
+          sendFCMNotification(
+            token,
+            "➕ Kèo có thêm người chơi mới!",
+            bodyText,
+            `/#/manage/${meetupId}`
+          ).catch((e) => console.error("FCM notify confirmed user failed:", e));
+        }
+      }).catch((err) => console.error(`Failed to get FCM token for notifying user ${uid}:`, err));
     }
 
     res.json({
@@ -231,16 +230,17 @@ export async function leaveOrKickMember(req: Request, res: Response) {
       "playersCount",
     ]);
 
-    // 3. Send notifications
+    // 3. Send notifications (Get tokens dynamically)
     if (isKick) {
       // Host kick player -> notify player
-      const playerToken = meetup.userFcmTokens[playerUid];
-      if (playerToken) {
-        const bodyText = `Host đã xóa bạn khỏi danh sách tham gia kèo "${meetup.title}".`;
-        sendFCMNotification(playerToken, "✕ Bạn đã bị xóa khỏi kèo", bodyText, "/").catch((e) =>
-          console.error("FCM notify kicked player failed:", e)
-        );
-      }
+      getUserFCMToken(playerUid).then((playerToken) => {
+        if (playerToken) {
+          const bodyText = `Host đã xóa bạn khỏi danh sách tham gia kèo "${meetup.title}".`;
+          sendFCMNotification(playerToken, "✕ Bạn đã bị xóa khỏi kèo", bodyText, "/").catch((e) =>
+            console.error("FCM notify kicked player failed:", e)
+          );
+        }
+      }).catch((err) => console.error("Failed to get FCM token for kicked player:", err));
 
       // Notify other members
       const targets = new Set<string>();
@@ -253,15 +253,13 @@ export async function leaveOrKickMember(req: Request, res: Response) {
 
       const bodyText = `${playerName} đã không còn tham gia kèo "${meetup.title}".`;
       for (const uid of targets) {
-        let token = meetup.userFcmTokens[uid];
-        if (!token && uid === meetup.hostUID) {
-          token = meetup.hostFcmToken;
-        }
-        if (token) {
-          sendFCMNotification(token, "👋 Thành viên đã rời kèo", bodyText, `/#/manage/${meetupId}`).catch(
-            (e) => console.error("FCM notify member left failed:", e)
-          );
-        }
+        getUserFCMToken(uid).then((token) => {
+          if (token) {
+            sendFCMNotification(token, "👋 Thành viên đã rời kèo", bodyText, `/#/manage/${meetupId}`).catch(
+              (e) => console.error("FCM notify member left failed:", e)
+            );
+          }
+        }).catch((err) => console.error(`Failed to get FCM token for notifying member ${uid}:`, err));
       }
     } else {
       // Player left voluntarily -> notify host and other members
@@ -275,15 +273,13 @@ export async function leaveOrKickMember(req: Request, res: Response) {
 
       const bodyText = `${playerName} đã rời khỏi kèo "${meetup.title}".`;
       for (const uid of targets) {
-        let token = meetup.userFcmTokens[uid];
-        if (!token && uid === meetup.hostUID) {
-          token = meetup.hostFcmToken;
-        }
-        if (token) {
-          sendFCMNotification(token, "🚪 Thành viên rời kèo", bodyText, `/#/manage/${meetupId}`).catch(
-            (e) => console.error("FCM notify member left failed:", e)
-          );
-        }
+        getUserFCMToken(uid).then((token) => {
+          if (token) {
+            sendFCMNotification(token, "🚪 Thành viên rời kèo", bodyText, `/#/manage/${meetupId}`).catch(
+              (e) => console.error("FCM notify member left failed:", e)
+            );
+          }
+        }).catch((err) => console.error(`Failed to get FCM token for notifying member ${uid}:`, err));
       }
     }
 

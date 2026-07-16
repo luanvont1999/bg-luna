@@ -233,14 +233,11 @@ export default function CreateMeetupForm({
       const color = colors[Math.floor(Math.random() * colors.length)];
       const hostName = user.displayName || user.email || "Ẩn danh";
 
-      const hostFcmToken = localStorage.getItem("fcmToken") || "";
-
       await addDoc(collection(db, "meetups"), {
         title,
         game,
         hostName,
         hostUid: user.uid,
-        hostFcmToken,
         lat,
         lng,
         playersCount: 1,

@@ -41,7 +41,6 @@ export function isHost(meetup: any, userUid: string | null | undefined): boolean
  */
 export async function requestToJoin(meetupId: string, user: User) {
   const name = user.displayName || user.email || 'Thành viên';
-  const fcmToken = localStorage.getItem('fcmToken') || '';
 
   const res = await fetch(`${API_BASE}/api/meetups/join`, {
     method: 'POST',
@@ -51,8 +50,7 @@ export async function requestToJoin(meetupId: string, user: User) {
     body: JSON.stringify({
       meetupId,
       userUid: user.uid,
-      userName: name,
-      fcmToken
+      userName: name
     })
   });
 

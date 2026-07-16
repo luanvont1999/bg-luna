@@ -298,7 +298,7 @@ export default function App() {
       case "chat":
         return <ChatRoute meetup={allMeetups.find((m) => m.id === route.meetupId)} />;
       case "manage":
-        return <ManageRoute meetup={allMeetups.find((m) => m.id === route.meetupId)} />;
+        return <ManageRoute meetup={allMeetups.find((m) => m.id === route.meetupId)} currentUser={currentUser} />;
       default:
         return (
           <FindRoute

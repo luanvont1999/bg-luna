@@ -8,7 +8,8 @@ import {
   getIdToken,
   User,
 } from "firebase/auth";
-import { auth, googleProvider } from "../libs/firebase";
+import { auth, googleProvider, db } from "../libs/firebase";
+import { doc, updateDoc, deleteField } from "firebase/firestore";
 import Icon from "./Icon";
 import { userProfileState } from "../libs/userProfile";
 import { translateError } from "../utils/error";
@@ -108,6 +109,15 @@ export default function Auth() {
     setErrorMessage("");
     setSuccessMessage("");
     try {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const userRef = doc(db, 'users', currentUser.uid);
+        await updateDoc(userRef, {
+          fcmToken: deleteField()
+        }).catch(err => console.warn("Lỗi xoá FCM Token khi đăng xuất:", err));
+      }
+      localStorage.removeItem('fcmToken');
+
       await signOut(auth);
       setSuccessMessage("Đã đăng xuất thành công.");
     } catch (err: any) {

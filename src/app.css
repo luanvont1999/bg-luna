@@ -322,6 +322,29 @@ a {
   background-color: var(--pastel-green);
 }
 
+/* Small Action Button Adjustments (Neo-brutalism) */
+.action-sm-btn, .action-sm-button {
+  padding: 6px 12px !important;
+  font-size: 0.82rem !important;
+  border-width: 2px !important;
+  box-shadow: 2.5px 2.5px 0 var(--color-border) !important;
+}
+
+.action-sm-btn:hover, .action-sm-button:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3.5px 3.5px 0 var(--color-border) !important;
+}
+
+.action-sm-btn:active, .action-sm-button:active {
+  transform: translate(2.5px, 2.5px) !important;
+  box-shadow: 0 0 0 var(--color-border) !important;
+}
+
+.action-sm-btn:disabled, .action-sm-button:disabled {
+  transform: none !important;
+  box-shadow: 1.5px 1.5px 0 var(--color-border) !important;
+}
+
 /* Cartoonish Glass/Flat Cards */
 .cartoon-card {
   background-color: var(--bg-card);

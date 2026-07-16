@@ -166,3 +166,37 @@ export async function sendFCMNotification(
     throw new Error(`FCM V1 API error ${res.status}: ${text}`);
   }
 }
+
+export async function getUserFCMToken(uid: string): Promise<string | null> {
+  try {
+    const { accessToken, projectId } = await getAccessToken();
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${uid}`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (res.status === 404) {
+      return null;
+    }
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.warn(`[FCM User Token] Failed to fetch token for user ${uid}: ${res.status} - ${text}`);
+      return null;
+    }
+
+    const data = await res.json();
+    const fcmToken = data.fields?.fcmToken?.stringValue || null;
+    return fcmToken;
+  } catch (err: any) {
+    console.error(`[FCM User Token Error] Failed to get token for user ${uid}:`, err.message);
+    return null;
+  }
+}
