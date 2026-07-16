@@ -51,7 +51,7 @@ export default function FilterRoute({
           ← Quay lại
         </button>
         <div className="nav-title-group">
-          <h2 className="text-lg font-bold flex items-center gap-1.5 m-0">
+          <h2 className="text-[1.5rem] font-bold flex items-center gap-1.5 m-0">
             <Icon name="filter" size={24} /> Tùy Chỉnh
           </h2>
         </div>

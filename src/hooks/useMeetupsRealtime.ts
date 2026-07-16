@@ -90,8 +90,11 @@ export function useMeetupsRealtime(
   useEffect(() => {
     let q: any = collection(db, "meetups");
     
-    // Server-side Firestore query for cities if specified
-    if (selectedCities && selectedCities.length > 0) {
+    // Server-side Firestore query optimization:
+    // - If selectedCities is empty, we don't query Firestore (directly set empty list in snapshot)
+    // - If selectedCities is less than 3, query only those cities to minimize network payload
+    // - If selectedCities is all 3, query all docs (safest & includes docs without city field)
+    if (selectedCities && selectedCities.length > 0 && selectedCities.length < 3) {
       q = query(collection(db, "meetups"), where("city", "in", selectedCities));
     }
 
@@ -99,6 +102,12 @@ export function useMeetupsRealtime(
       q,
       async (snapshot) => {
         try {
+          if (selectedCities && selectedCities.length === 0) {
+            setAllMeetups([]);
+            setHasLoadedInitialMeetups(true);
+            return;
+          }
+
           if (snapshot.empty) {
             // Seed logic
             if (auth.currentUser) {
@@ -115,11 +124,10 @@ export function useMeetupsRealtime(
           } else {
             const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
             
-            // Client-side filtering for distance limits (cannot be queried natively in Firestore)
+            // Client-side filtering
             const filtered = list.filter((m: any) => {
-              // Backward-compatibility: if doc doesn't have city, calculate on the fly for safety
-              if (selectedCities && selectedCities.length > 0 && !m.city) {
-                const calculatedCity = getMeetupCity(m);
+              if (selectedCities && selectedCities.length > 0) {
+                const calculatedCity = m.city || getMeetupCity(m);
                 if (!selectedCities.includes(calculatedCity)) return false;
               }
               

@@ -80,7 +80,7 @@ export default function App() {
     } catch (e) {
       console.error("Error parsing filter_cities:", e);
     }
-    return [];
+    return ["HN", "HCM", "OTHER"];
   });
   const [selectedDistance, setSelectedDistance] = useState<string>(() => {
     return localStorage.getItem("filter_distance") || "all";

@@ -29,17 +29,18 @@ export default function FindRoute({
   return (
     <section id="find-route" className="pb-10 flex flex-col gap-4 text-left">
       <div className="flex justify-between items-center w-full flex-wrap gap-2.5">
-        <h2 className="section-title m-0 text-[1.5rem] font-extrabold text-[#1e1e24]">Tìm kèo xung quanh</h2>
+        <h2 className="section-title m-0 text-[1.5rem] font-extrabold text-[#1e1e24]">
+          Tìm kèo xung quanh
+        </h2>
         <button
           type="button"
           className="btn btn-secondary flex items-center gap-1.5 py-2 px-4 font-bold bg-pastelYellow text-[#1e1e24] border-3 border-[#1e1e24] rounded-lg shadow-[3px_3px_0_#1e1e24] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4.5px_4.5px_0_#1e1e24] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0_#1e1e24] transition-all"
           onClick={() => navigate({ name: "filter" })}
         >
           <Icon name="filter" size={15} />
-          <span>Bộ lọc</span>
         </button>
       </div>
-      
+
       <MeetupList
         meetups={filteredMeetups}
         userLat={userLat}
