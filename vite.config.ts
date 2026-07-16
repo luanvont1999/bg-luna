@@ -17,6 +17,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      useCredentials: true,
       includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icons.svg'],
       devOptions: {
         enabled: true
