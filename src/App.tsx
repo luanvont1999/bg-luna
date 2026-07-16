@@ -30,7 +30,7 @@ import MapRoute from "./routes/MapRoute";
 import FilterRoute from "./routes/FilterRoute";
 import ChatRoute from "./routes/ChatRoute";
 import ChatsListRoute from "./routes/ChatsListRoute";
-import ManageRoute from "./routes/ManageRoute";
+import MeetupDetailRoute from "./routes/MeetupDetailRoute";
 
 import { calculateDistance, getMeetupCity } from "./utils/geo";
 
@@ -147,10 +147,10 @@ export default function App() {
     try {
       const url = new URL(urlStr, window.location.origin);
       const routeParam = url.searchParams.get("route");
-      if (routeParam === "manage") {
+      if (routeParam === "meetup-detail" || routeParam === "manage") {
         const meetupId = url.searchParams.get("meetupId");
         if (meetupId) {
-          window.location.hash = `#/manage/${meetupId}`;
+          window.location.hash = `#/meetup-detail/${meetupId}`;
         }
       } else if (routeParam === "profile") {
         window.location.hash = `#/profile`;
@@ -297,8 +297,8 @@ export default function App() {
         );
       case "chat":
         return <ChatRoute meetup={allMeetups.find((m) => m.id === route.meetupId)} />;
-      case "manage":
-        return <ManageRoute meetup={allMeetups.find((m) => m.id === route.meetupId)} currentUser={currentUser} />;
+      case "meetup-detail":
+        return <MeetupDetailRoute meetup={allMeetups.find((m) => m.id === route.meetupId)} currentUser={currentUser} />;
       default:
         return (
           <FindRoute

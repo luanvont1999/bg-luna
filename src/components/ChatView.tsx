@@ -15,6 +15,7 @@ import {
   isApprovedMember,
   requestToJoin,
   cancelJoinRequest,
+  confirmParticipation,
   subscribeToMeetupRequests,
   type MeetupRequest,
 } from "../api/meetupService";
@@ -30,6 +31,7 @@ interface Meetup {
   host_uid?: string;
   hostUid?: string;
   approvedUids?: string[];
+  approvedPendingUids?: string[];
   color?: string;
 }
 
@@ -58,6 +60,10 @@ export default function ChatView({ meetup, onBack }: Props) {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const hasChatAccess = isApprovedMember(meetup, currentUser?.uid);
+
+  // Check if player is approved but pending confirmation
+  const approvedPendingUids = meetup?.approvedPendingUids || [];
+  const isApprovedPending = currentUser ? approvedPendingUids.includes(currentUser.uid) : false;
 
   const myRequest = currentUser
     ? requests.find((r) => r.uid === currentUser.uid) || null
@@ -178,6 +184,19 @@ export default function ChatView({ meetup, onBack }: Props) {
     }
   }
 
+  async function handleConfirmParticipation() {
+    if (!meetup?.id || !currentUser || isRequesting) return;
+    setIsRequesting(true);
+    try {
+      const name = currentUser.displayName || currentUser.email || "Thành viên";
+      await confirmParticipation(meetup.id, currentUser.uid, name);
+    } catch (err) {
+      console.error("Confirm participation failed:", err);
+    } finally {
+      setIsRequesting(false);
+    }
+  }
+
   return (
     <div className="fullscreen-chat-view flex flex-col h-[calc(100vh-120px)] md:h-[calc(100vh-160px)] gap-4 mb-5 w-full">
       {!meetup ? (
@@ -240,6 +259,21 @@ export default function ChatView({ meetup, onBack }: Props) {
                     </button>
                     <button className="btn btn-primary flex-1" onClick={onBack}>
                       Quay lại danh sách
+                    </button>
+                  </div>
+                </>
+              ) : isApprovedPending ? (
+                <>
+                  <div className="pending-status-pill p-[10px_16px] bg-[#9ee3b2] border-3 border-[#1e1e24] rounded-md font-extrabold text-[0.9rem] shadow-[3px_3px_0_#1e1e24] mb-2 text-[#1e1e24]">
+                    <Icon name="check-circle" size={16} className="mr-1 inline" /> Bạn đã được duyệt! Hãy xác nhận tham gia.
+                  </div>
+                  <div className="action-btn-group flex gap-3 w-full justify-center">
+                    <button className="btn btn-primary flex-1 bg-pastelYellow text-[#1e1e24]" onClick={handleConfirmParticipation} disabled={isRequesting}>
+                      <Icon name="check" size={15} className="mr-1 inline" />
+                      <span>{isRequesting ? "..." : "Xác nhận tham gia"}</span>
+                    </button>
+                    <button className="btn btn-secondary flex-grow-0 py-3 px-5 text-sm" onClick={onBack}>
+                      Quay lại
                     </button>
                   </div>
                 </>

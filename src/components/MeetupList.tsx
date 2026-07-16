@@ -148,15 +148,15 @@ function MeetupCard({
   const isUserHost = isHost(meetup, currentUser?.uid);
   const isApproved = isApprovedMember(meetup, currentUser?.uid);
 
+  // Check if player is approved but pending confirmation
+  const approvedPendingUids = meetup.approvedPendingUids || [];
+  const isApprovedPending = currentUser ? approvedPendingUids.includes(currentUser.uid) : false;
+
   // Check if player has sent request
   const myRequest = currentUser ? requests.find((r) => r.uid === currentUser.uid) || null : null;
   const isPending = myRequest?.status === "pending";
 
   const isFull = count >= needed;
-
-  // Check confirmation status
-  const confirmedUids = meetup.confirmedUids || [];
-  const isConfirmed = currentUser ? confirmedUids.includes(currentUser.uid) : false;
 
   // Calculate distance
   const distance =
@@ -208,7 +208,11 @@ function MeetupCard({
     >
       <div className="card-top-header flex justify-between items-start gap-3 w-full">
         <div className="card-title-block flex-1 min-w-0">
-          <h3 className="meetup-title-text font-extrabold text-[1.12rem] text-[#1e1e24] m-0 mb-1 leading-snug line-clamp-2">
+          <h3 
+            className="meetup-title-text font-extrabold text-[1.3rem] text-[#1e1e24] m-0 mb-1 leading-snug line-clamp-2 hover:underline cursor-pointer hover:text-pastelPurple transition-colors"
+            onClick={() => currentUser && navigate({ name: "meetup-detail", meetupId: meetup.id })}
+            title={currentUser ? "Bấm để xem chi tiết" : "Đăng nhập để xem chi tiết"}
+          >
             {meetup.title}
           </h3>
           <span className="meetup-game flex items-center gap-1.5 text-xs font-bold text-[#666666]">
@@ -238,66 +242,34 @@ function MeetupCard({
       </div>
 
       <div className="card-actions flex flex-wrap gap-2.5 items-center justify-between mt-1">
-        <div className="left-side-actions flex gap-2 flex-wrap">
-          {isUserHost ? (
-            <button
-              type="button"
-              className="btn btn-primary text-xs py-2 px-4 inline-flex items-center gap-1 bg-[#ffa4b2]"
-              onClick={() => navigate({ name: "manage", meetupId: meetup.id })}
-            >
-              <Icon name="settings" size={13} className="inline" /> Quản lý kèo
-            </button>
-          ) : isApproved ? (
+        <div className="left-side-actions flex gap-2 flex-wrap items-center">
+          {currentUser ? (
             <>
-              <button
-                type="button"
-                className="btn btn-success text-xs py-2 px-4 inline-flex items-center gap-1"
-                onClick={() => navigate({ name: "chat", meetupId: meetup.id })}
-              >
-                <Icon name="chat" size={13} className="inline" /> Vào chat box
-              </button>
-              {!isConfirmed && (
-                <button
-                  type="button"
-                  className="btn btn-primary text-xs py-2 px-4 inline-flex items-center gap-1 bg-pastelYellow"
-                  onClick={handleConfirmParticipation}
-                  disabled={isActionLoading}
-                >
-                  <Icon name="check" size={13} className="inline" />
-                  <span>{isActionLoading ? "..." : "Xác nhận tham gia"}</span>
-                </button>
+              {/* Status Badges */}
+              {isUserHost && (
+                <span className="text-[0.7rem] font-bold text-pastelPurple flex items-center gap-0.5 bg-[#f3e8ff] border border-pastelPurple p-[2px_8px] rounded">
+                  ★ Host
+                </span>
               )}
-              {isConfirmed && (
-                <span className="text-[0.7rem] font-bold text-[#10b981] flex items-center gap-0.5 bg-[#e6fcf5] border border-[#10b981] p-[2px_6px] rounded">
-                  <Icon name="check-circle" size={12} className="inline" /> Đã xác nhận chơi
+              {isApproved && (
+                <span className="text-[0.7rem] font-bold text-[#10b981] flex items-center gap-0.5 bg-[#e6fcf5] border border-[#10b981] p-[2px_8px] rounded">
+                  ✓ Đã tham gia
+                </span>
+              )}
+              {isApprovedPending && (
+                <span className="text-[0.7rem] font-bold text-[#f59e0b] flex items-center gap-0.5 bg-[#fffbeb] border border-[#f59e0b] p-[2px_8px] rounded">
+                  ⚠ Chờ xác nhận
+                </span>
+              )}
+              {isPending && (
+                <span className="text-[0.7rem] font-bold text-[#3b82f6] flex items-center gap-0.5 bg-[#eff6ff] border border-[#3b82f6] p-[2px_8px] rounded">
+                  ✉ Đang chờ duyệt
                 </span>
               )}
             </>
-          ) : isPending ? (
-            <button
-              type="button"
-              className="btn btn-secondary text-xs py-2 px-4 inline-flex items-center gap-1"
-              onClick={handleCancelRequest}
-              disabled={isActionLoading}
-            >
-              <Icon name="x" size={13} className="inline" />
-              <span>{isActionLoading ? "Đang hủy..." : "Hủy yêu cầu"}</span>
-            </button>
-          ) : currentUser ? (
-            <button
-              type="button"
-              className={`btn text-xs py-2 px-4 inline-flex items-center gap-1 border-2 border-[#1e1e24] rounded-md font-bold shadow-[2px_2px_0_#1e1e24] ${
-                isFull ? "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none border-gray-300" : "btn-success bg-[#9ee3b2]"
-              }`}
-              onClick={handleJoinRequest}
-              disabled={isActionLoading || isFull}
-            >
-              <Icon name="plus" size={13} className="inline" />
-              <span>{isFull ? "Kèo đã đầy" : isActionLoading ? "Đang gửi..." : "Xin tham gia"}</span>
-            </button>
           ) : (
             <span className="text-[0.7rem] font-bold text-[#666666] italic bg-[#fbf7ed] p-[4px_8px] rounded border border-gray-300">
-              Đăng nhập để xin tham gia kèo
+              Đăng nhập để xem chi tiết
             </span>
           )}
         </div>

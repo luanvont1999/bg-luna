@@ -9,9 +9,9 @@ export type RouteParams =
   | { name: 'filter' }
   | { name: 'map'; mode: 'discover' | 'select'; meetupId?: string }
   | { name: 'chat'; meetupId: string }
-  | { name: 'manage'; meetupId: string };
+  | { name: 'meetup-detail'; meetupId: string };
 
-export const CHILD_ROUTES: RouteParams['name'][] = ['filter', 'map', 'chat', 'manage'];
+export const CHILD_ROUTES: RouteParams['name'][] = ['filter', 'map', 'chat', 'meetup-detail'];
 
 let _route: RouteParams = { name: 'find' };
 let _history: RouteParams[] = [];
@@ -60,8 +60,8 @@ export function parseHash(hash: string): RouteParams {
     if (routeName === 'chat') {
       return { name: 'chat', meetupId: subParam };
     }
-    if (routeName === 'manage') {
-      return { name: 'manage', meetupId: subParam };
+    if (routeName === 'meetup-detail') {
+      return { name: 'meetup-detail', meetupId: subParam };
     }
   }
 
@@ -79,7 +79,7 @@ export function buildHash(route: RouteParams): string {
     return route.meetupId ? `#/map/${route.mode}/${route.meetupId}` : `#/map/${route.mode}`;
   }
   if (route.name === 'chat') return `#/chat/${route.meetupId}`;
-  if (route.name === 'manage') return `#/manage/${route.meetupId}`;
+  if (route.name === 'meetup-detail') return `#/meetup-detail/${route.meetupId}`;
   return '#/find';
 }
 
