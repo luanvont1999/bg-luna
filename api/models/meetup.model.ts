@@ -229,17 +229,31 @@ export async function getFirestoreMeetup(meetupId: string): Promise<MeetupData> 
   const { accessToken, projectId } = await getAccessToken();
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/meetups/${meetupId}`;
 
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Firestore read failed status ${res.status}: ${text}`);
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Firestore read failed status ${res.status}: ${text}`);
+    }
+
+    const doc = (await res.json()) as FirestoreDocument;
+    return parseFirestoreDocument(doc);
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError") {
+      throw new Error("Yêu cầu đọc Firestore bị quá thời gian (5s timeout)");
+    }
+    throw err;
   }
-
-  const doc = (await res.json()) as FirestoreDocument;
-  return parseFirestoreDocument(doc);
 }
 
 export async function updateFirestoreMeetup(m: MeetupData, updateFields: string[]): Promise<void> {
@@ -261,18 +275,32 @@ export async function updateFirestoreMeetup(m: MeetupData, updateFields: string[
 
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/meetups/${m.id}?${queryParams.toString()}`;
 
-  const res = await fetch(url, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(doc),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Firestore patch failed status ${res.status}: ${text}`);
+  try {
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(doc),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Firestore patch failed status ${res.status}: ${text}`);
+    }
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError") {
+      throw new Error("Yêu cầu cập nhật Firestore bị quá thời gian (5s timeout)");
+    }
+    throw err;
   }
 }
 
@@ -293,18 +321,32 @@ export async function setFirestoreRequest(
     },
   };
 
-  const res = await fetch(url, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(doc),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Firestore set request failed status ${res.status}: ${text}`);
+  try {
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(doc),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Firestore set request failed status ${res.status}: ${text}`);
+    }
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError") {
+      throw new Error("Yêu cầu gửi yêu cầu tham gia Firestore bị quá thời gian (5s timeout)");
+    }
+    throw err;
   }
 }
 
@@ -322,18 +364,32 @@ export async function updateFirestoreRequestStatus(
     },
   };
 
-  const res = await fetch(url, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(doc),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Firestore update request status failed: ${text}`);
+  try {
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(doc),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Firestore update request status failed: ${text}`);
+    }
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError") {
+      throw new Error("Yêu cầu cập nhật trạng thái yêu cầu trên Firestore bị quá thời gian (5s timeout)");
+    }
+    throw err;
   }
 }
 
@@ -341,13 +397,27 @@ export async function deleteFirestoreRequest(meetupId: string, userUid: string):
   const { accessToken, projectId } = await getAccessToken();
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/meetups/${meetupId}/requests/${userUid}`;
 
-  const res = await fetch(url, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-  if (!res.ok && res.status !== 404) {
-    const text = await res.text();
-    throw new Error(`Firestore delete request failed status ${res.status}: ${text}`);
+  try {
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok && res.status !== 404) {
+      const text = await res.text();
+      throw new Error(`Firestore delete request failed status ${res.status}: ${text}`);
+    }
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError") {
+      throw new Error("Yêu cầu xoá yêu cầu tham gia trên Firestore bị quá thời gian (5s timeout)");
+    }
+    throw err;
   }
 }
