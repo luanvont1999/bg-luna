@@ -61,26 +61,40 @@ export async function getAccessToken(): Promise<{ accessToken: string; projectId
     }
   );
 
-  const res = await fetch(sa.token_uri, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: assertion,
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Lỗi Google OAuth API: ${res.status} - ${text}`);
+  try {
+    const res = await fetch(sa.token_uri, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: assertion,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Lỗi Google OAuth API: ${res.status} - ${text}`);
+    }
+
+    const data = (await res.json()) as { access_token: string; expires_in?: number };
+    cachedAccessToken = data.access_token;
+    tokenExpiration = now + (data.expires_in || 3600) * 1000 - 5 * 60 * 1000;
+    activeProjectId = sa.project_id;
+
+    return { accessToken: cachedAccessToken, projectId: activeProjectId };
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError") {
+      throw new Error("Yêu cầu lấy Access Token từ Google OAuth API bị quá thời gian (5s timeout)");
+    }
+    throw err;
   }
-
-  const data = (await res.json()) as { access_token: string; expires_in?: number };
-  cachedAccessToken = data.access_token;
-  tokenExpiration = now + (data.expires_in || 3600) * 1000 - 5 * 60 * 1000;
-  activeProjectId = sa.project_id;
-
-  return { accessToken: cachedAccessToken, projectId: activeProjectId };
 }
 
 export async function sendFCMNotification(
