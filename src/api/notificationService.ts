@@ -87,6 +87,7 @@ export async function sendPushNotificationProxy(fcmToken: string, title: string,
  * Gửi thông báo broadcast tới tất cả các thiết bị đã đăng ký.
  */
 export async function broadcastPushNotifications(title: string, body: string, clickAction?: string): Promise<{ success: boolean; message: string; errors?: string[] }> {
+  console.log('[FCM Frontend Broadcast] Bắt đầu quét Firestore tìm FCM Tokens...');
   try {
     const querySnapshot = await getDocs(collection(db, 'users'));
     const tokens: string[] = [];
@@ -98,11 +99,16 @@ export async function broadcastPushNotifications(title: string, body: string, cl
       }
     });
 
+    console.log(`[FCM Frontend Broadcast] Đã quét xong. Tìm thấy tổng cộng ${querySnapshot.size} tài khoản, trong đó có ${tokens.length} tài khoản đăng ký FCM Token.`);
+
     if (tokens.length === 0) {
+      console.warn('[FCM Frontend Broadcast] Không có thiết bị nào đăng ký token.');
       return { success: false, message: 'Không tìm thấy thiết bị nào có đăng ký FCM Token trên Firestore!' };
     }
 
     const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_URL || '') : '';
+    console.log(`[FCM Frontend Broadcast] Gửi request lên Backend API: ${API_BASE}/api/send-notification`);
+    
     const res = await fetch(`${API_BASE}/api/send-notification`, {
       method: 'POST',
       headers: {
@@ -112,13 +118,14 @@ export async function broadcastPushNotifications(title: string, body: string, cl
     });
     
     const data = await res.json();
+    console.log('[FCM Frontend Broadcast] Backend phản hồi:', data);
     return {
       success: data.success,
       message: data.message || data.warning || 'Đã thực hiện gửi broadcast!',
       errors: data.errors
     };
   } catch (err: any) {
-    console.error('[FCM Broadcast Error]:', err);
+    console.error('[FCM Frontend Broadcast Error]:', err);
     return { success: false, message: 'Lỗi gửi broadcast: ' + err.message };
   }
 }
