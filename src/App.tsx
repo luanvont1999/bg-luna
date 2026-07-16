@@ -172,8 +172,8 @@ export default function App() {
       setCurrentUser(user);
       if (user) {
         initNotifications(user.uid, (payload) => {
-          const title = payload.notification?.title || "Thông báo mới";
-          const body = payload.notification?.body || "";
+          const title = payload.notification?.title || payload.data?.title || "Thông báo mới";
+          const body = payload.notification?.body || payload.data?.body || "";
           addToast(`${title}: ${body}`, "info");
 
           if (Notification.permission === "granted") {

@@ -109,6 +109,10 @@ export async function sendFCMNotification(
   const payload = {
     message: {
       token: token,
+      notification: {
+        title,
+        body,
+      },
       data: {
         title,
         body,
@@ -117,6 +121,13 @@ export async function sendFCMNotification(
       webpush: {
         headers: {
           Urgency: "high",
+        },
+        notification: {
+          title,
+          body,
+          icon: "/boardgame_pwa_icon_1784017090071.png",
+          badge: "/boardgame_pwa_icon_1784017090071.png",
+          click_action: clickAction,
         },
         fcm_options: {
           link: clickAction,
