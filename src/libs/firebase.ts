@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, EmailAuthProvider } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore } from 'firebase/firestore';
 import { getMessaging } from 'firebase/messaging';
 
 // Firebase configuration using Vite environment variables.
@@ -16,7 +16,11 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
-const db = getFirestore(app);
+
+// Force long-polling to prevent Firestore connection hangs on strict networks/proxies/Vercel gates
+const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+});
 const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 
 const googleProvider = new GoogleAuthProvider();
