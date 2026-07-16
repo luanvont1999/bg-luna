@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { serve } from "@hono/node-server";
 import { handle } from "hono/vercel";
 import dotenv from "dotenv";
 
@@ -27,14 +26,18 @@ app.route("/", healthRouter);
 app.route("/", meetupRouter);
 app.route("/", notificationRouter);
 
-// Start the Node HTTP server on port 8080 only when running locally (outside Vercel)
+// Start the Node HTTP server on port 8080 only when running locally (outside Vercel).
+// Dynamic import prevents @hono/node-server from being loaded on Vercel,
+// where its native Node.js HTTP bindings can hang the serverless runtime.
 if (!process.env.VERCEL) {
-  const port = 8080;
-  serve({
-    fetch: app.fetch,
-    port: port,
+  import("@hono/node-server").then(({ serve }) => {
+    const port = 8080;
+    serve({
+      fetch: app.fetch,
+      port: port,
+    });
+    console.log(`Server Hono/Node.js MVC (Local) đang chạy tại http://localhost:${port}...`);
   });
-  console.log(`Server Hono/Node.js MVC (Local) đang chạy tại http://localhost:${port}...`);
 }
 
 // Vercel serverless function handler
