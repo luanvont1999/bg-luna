@@ -55,15 +55,19 @@ export default function MeetupDetailRoute({ meetup, currentUser }: Props) {
   }, [meetup?.id]);
 
   const pendingRequests = requests.filter((r) => r.status === "pending");
-  
+
   const approvedUids = meetup?.approvedUids || [];
   const approvedPendingUids = meetup?.approvedPendingUids || [];
-  
+
   // Confirmed members (both host accepted & player confirmed)
-  const confirmedRequests = requests.filter((r) => r.status === "approved" && approvedUids.includes(r.uid));
-  
+  const confirmedRequests = requests.filter(
+    (r) => r.status === "approved" && approvedUids.includes(r.uid),
+  );
+
   // Approved pending members (host accepted but player has not confirmed yet)
-  const approvedPendingRequests = requests.filter((r) => r.status === "approved" && approvedPendingUids.includes(r.uid));
+  const approvedPendingRequests = requests.filter(
+    (r) => r.status === "approved" && approvedPendingUids.includes(r.uid),
+  );
 
   // Status variables
   const count = meetup?.playersCount || meetup?.players_count || 1;
@@ -71,9 +75,13 @@ export default function MeetupDetailRoute({ meetup, currentUser }: Props) {
   const isFull = count >= needed;
 
   const isApproved = isApprovedMember(meetup, currentUser?.uid);
-  const isApprovedPending = currentUser ? approvedPendingUids.includes(currentUser.uid) : false;
+  const isApprovedPending = currentUser
+    ? approvedPendingUids.includes(currentUser.uid)
+    : false;
 
-  const myRequest = currentUser ? requests.find((r) => r.uid === currentUser.uid) || null : null;
+  const myRequest = currentUser
+    ? requests.find((r) => r.uid === currentUser.uid) || null
+    : null;
   const isPending = myRequest?.status === "pending";
 
   async function handleJoinRequest() {
@@ -189,17 +197,10 @@ export default function MeetupDetailRoute({ meetup, currentUser }: Props) {
             >
               ← Quay lại
             </button>
-            <div className="nav-title-group">
-              <h2 className="text-[1.3rem] font-extrabold m-0 flex items-center gap-2">
-                <Icon name="users" size={22} className="inline" />{" "}
-                {isHost
-                  ? "Bảng Quản Lý Thành Viên Kèo"
-                  : "Thông Tin Thành Viên Kèo"}
+            <div className="nav-title-group flex justify-end flex-1">
+              <h2 className="text-[1.5rem] font-extrabold m-0 flex items-center gap-2">
+                Buổi chơi <Icon name="users" size={24} className="inline" />
               </h2>
-              <span className="sub-title text-[0.85rem] font-semibold text-[#1e1e24]">
-                Host: {meetup.hostName || meetup.host_name || "Ẩn danh"} • Kèo:{" "}
-                {meetup.title}
-              </span>
             </div>
           </div>
 
@@ -215,7 +216,8 @@ export default function MeetupDetailRoute({ meetup, currentUser }: Props) {
             {/* User Action Section */}
             <div className="user-action-block border-3 border-dashed border-[#1e1e24] p-5 rounded-lg bg-[#fbf7ed] flex flex-col gap-3">
               <h4 className="font-extrabold text-[0.95rem] text-[#1e1e24] flex items-center gap-1.5 m-0">
-                <Icon name="settings" size={16} className="inline" /> Hành động của bạn:
+                <Icon name="settings" size={16} className="inline" /> Hành động
+                của bạn:
               </h4>
 
               <div className="flex flex-wrap gap-3 items-center mt-1">
@@ -228,9 +230,12 @@ export default function MeetupDetailRoute({ meetup, currentUser }: Props) {
                     <button
                       type="button"
                       className="btn btn-success py-2.5 px-5 font-bold"
-                      onClick={() => navigate({ name: "chat", meetupId: meetup.id })}
+                      onClick={() =>
+                        navigate({ name: "chat", meetupId: meetup.id })
+                      }
                     >
-                      <Icon name="chat" size={15} className="inline" /> Vào chat box thảo luận
+                      <Icon name="chat" size={15} className="inline" /> Vào chat
+                      box thảo luận
                     </button>
                     <span className="text-xs font-extrabold text-pastelPurple bg-[#f3e8ff] border-2 border-pastelPurple p-[4px_10px] rounded">
                       ★ Bạn đang quản lý kèo này với tư cách Host
@@ -241,9 +246,12 @@ export default function MeetupDetailRoute({ meetup, currentUser }: Props) {
                     <button
                       type="button"
                       className="btn btn-success py-2.5 px-5 font-bold"
-                      onClick={() => navigate({ name: "chat", meetupId: meetup.id })}
+                      onClick={() =>
+                        navigate({ name: "chat", meetupId: meetup.id })
+                      }
                     >
-                      <Icon name="chat" size={15} className="inline" /> Vào chat box thảo luận
+                      <Icon name="chat" size={15} className="inline" /> Vào chat
+                      box thảo luận
                     </button>
                     <button
                       type="button"
@@ -251,13 +259,20 @@ export default function MeetupDetailRoute({ meetup, currentUser }: Props) {
                       onClick={handleLeaveVoluntarily}
                       disabled={isProcessing}
                     >
-                      <Icon name="log-out" size={15} className="inline" /> Rời khỏi kèo
+                      <Icon name="log-out" size={15} className="inline" /> Rời
+                      khỏi kèo
                     </button>
                   </>
                 ) : isApprovedPending ? (
                   <div className="flex flex-col gap-3 w-full text-left">
                     <p className="text-sm font-extrabold text-[#d97706] flex items-center gap-1.5 m-0">
-                      <Icon name="alert-triangle" size={16} className="inline" /> Host đã duyệt yêu cầu! Hãy xác nhận tham gia để vào phòng chơi.
+                      <Icon
+                        name="alert-triangle"
+                        size={16}
+                        className="inline"
+                      />{" "}
+                      Host đã duyệt yêu cầu! Hãy xác nhận tham gia để vào phòng
+                      chơi.
                     </p>
                     <div className="flex flex-wrap gap-3">
                       <button
@@ -266,7 +281,8 @@ export default function MeetupDetailRoute({ meetup, currentUser }: Props) {
                         onClick={handleConfirmParticipation}
                         disabled={isProcessing}
                       >
-                        <Icon name="check" size={15} className="inline" /> Xác nhận tham gia
+                        <Icon name="check" size={15} className="inline" /> Xác
+                        nhận tham gia
                       </button>
                       <button
                         type="button"
@@ -274,14 +290,16 @@ export default function MeetupDetailRoute({ meetup, currentUser }: Props) {
                         onClick={handleCancelRequest}
                         disabled={isProcessing}
                       >
-                        <Icon name="x" size={15} className="inline" /> Hủy yêu cầu
+                        <Icon name="x" size={15} className="inline" /> Hủy yêu
+                        cầu
                       </button>
                     </div>
                   </div>
                 ) : isPending ? (
                   <div className="flex flex-col gap-3 w-full text-left">
                     <p className="text-sm font-extrabold text-[#2563eb] flex items-center gap-1.5 m-0">
-                      <Icon name="clock" size={16} className="inline" /> Yêu cầu tham gia của bạn đang chờ Host xét duyệt...
+                      <Icon name="clock" size={16} className="inline" /> Yêu cầu
+                      tham gia của bạn đang chờ Host xét duyệt...
                     </p>
                     <button
                       type="button"
@@ -289,20 +307,29 @@ export default function MeetupDetailRoute({ meetup, currentUser }: Props) {
                       onClick={handleCancelRequest}
                       disabled={isProcessing}
                     >
-                      <Icon name="x" size={15} className="inline" /> Hủy yêu cầu tham gia
+                      <Icon name="x" size={15} className="inline" /> Hủy yêu cầu
+                      tham gia
                     </button>
                   </div>
                 ) : (
                   <button
                     type="button"
                     className={`btn py-2.5 px-5 font-bold ${
-                      isFull ? "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none border-gray-300" : "btn-success bg-[#9ee3b2]"
+                      isFull
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none border-gray-300"
+                        : "btn-success bg-[#9ee3b2]"
                     }`}
                     onClick={handleJoinRequest}
                     disabled={isProcessing || isFull}
                   >
                     <Icon name="plus" size={15} className="inline" />
-                    <span>{isFull ? "Kèo đã đầy sĩ số" : isProcessing ? "Đang gửi..." : "Gửi yêu cầu tham gia"}</span>
+                    <span>
+                      {isFull
+                        ? "Kèo đã đầy sĩ số"
+                        : isProcessing
+                          ? "Đang gửi..."
+                          : "Gửi yêu cầu tham gia"}
+                    </span>
                   </button>
                 )}
               </div>
@@ -421,7 +448,13 @@ export default function MeetupDetailRoute({ meetup, currentUser }: Props) {
             {approvedPendingRequests.length > 0 && (
               <div className="members-block flex flex-col gap-3 mt-4">
                 <h3 className="block-title text-[1.1rem] font-extrabold text-[#d97706] flex items-center gap-2">
-                  <Icon name="clock" size={18} className="inline text-[#d97706]" /> Đang chờ người chơi xác nhận ({approvedPendingRequests.length}):
+                  <Icon
+                    name="clock"
+                    size={18}
+                    className="inline text-[#d97706]"
+                  />{" "}
+                  Đang chờ người chơi xác nhận ({approvedPendingRequests.length}
+                  ):
                 </h3>
 
                 <div className="members-grid grid grid-cols-1 md:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">

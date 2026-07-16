@@ -34,10 +34,10 @@ export default function FindRoute({
         </h2>
         <button
           type="button"
-          className="btn btn-secondary flex items-center gap-1.5 py-2 px-4 font-bold bg-pastelYellow text-[#1e1e24] border-3 border-[#1e1e24] rounded-lg shadow-[3px_3px_0_#1e1e24] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4.5px_4.5px_0_#1e1e24] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0_#1e1e24] transition-all"
+          className="btn btn-secondary action-sm-button flex items-center gap-1.5 py-2  font-bold bg-pastelYellow text-[#1e1e24] border-3 border-[#1e1e24] rounded-lg shadow-[3px_3px_0_#1e1e24] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4.5px_4.5px_0_#1e1e24] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0_#1e1e24] transition-all"
           onClick={() => navigate({ name: "filter" })}
         >
-          <Icon name="filter" size={15} />
+          <Icon name="filter" size={24} />
         </button>
       </div>
 
