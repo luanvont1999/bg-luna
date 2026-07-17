@@ -131,6 +131,7 @@ export default function MyMeetupsRoute({
             isTrackingGPS={isTrackingGPS}
             gpsError={gpsError}
             isLoading={isLoading}
+            showExpired={true}
           />
         </>
       ) : (

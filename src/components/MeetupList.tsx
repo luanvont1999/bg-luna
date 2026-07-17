@@ -47,6 +47,7 @@ interface Props {
   gpsError: boolean;
   onSelectMeetupOnMap?: (meetupId: string, lat: number, lng: number) => void;
   isLoading?: boolean;
+  showExpired?: boolean;
 }
 
 export default function MeetupList({
@@ -59,8 +60,17 @@ export default function MeetupList({
   gpsError,
   onSelectMeetupOnMap,
   isLoading = false,
+  showExpired = false,
 }: Props) {
   const [currentUser, setCurrentUser] = useState<User | null>(auth.currentUser);
+  
+  const now = new Date();
+  const displayedMeetups = showExpired
+    ? meetups
+    : meetups.filter((m) => {
+        if (!m.time) return false;
+        return new Date(m.time).getTime() >= now.getTime();
+      });
 
   // Sync auth state
   useEffect(() => {
@@ -85,7 +95,7 @@ export default function MeetupList({
             </div>
           ))}
         </div>
-      ) : meetups.length === 0 ? (
+      ) : displayedMeetups.length === 0 ? (
         <div className="cartoon-card empty-card text-center p-10 bg-white border-3 border-[#1e1e24] rounded-2xl shadow-neo flex flex-col items-center gap-3">
           <div className="empty-state-icon text-[3.5rem]"><Icon name="dice" size={48} /></div>
           <h3 className="text-xl font-bold text-[#1e1e24]">Không tìm thấy kèo chơi phù hợp!</h3>
@@ -98,7 +108,7 @@ export default function MeetupList({
         </div>
       ) : (
         <div className="meetups-list-grid flex flex-col gap-4">
-          {meetups.map((m) => (
+          {displayedMeetups.map((m) => (
             <MeetupCard
               key={m.id}
               meetup={m}
@@ -163,6 +173,10 @@ function MeetupCard({
     userLat !== null && userLng !== null
       ? calculateDistance(userLat, userLng, meetup.lat, meetup.lng)
       : null;
+
+  const city = (meetup as any).city || getMeetupCity(meetup);
+  const cityLabel = city === "HCM" ? "TP. HCM" : city === "HN" ? "Hà Nội" : "Khác";
+  const isExpired = meetup.time ? new Date(meetup.time).getTime() < Date.now() : false;
 
   async function handleJoinRequest() {
     if (!currentUser || isActionLoading) return;
@@ -243,6 +257,18 @@ function MeetupCard({
 
       <div className="card-actions flex flex-wrap gap-2.5 items-center justify-between mt-1">
         <div className="left-side-actions flex gap-2 flex-wrap items-center">
+          {/* Khu vực (City) */}
+          <span className="text-[0.7rem] font-bold text-[#0891b2] flex items-center gap-1 bg-[#ecfeff] border border-[#0891b2] p-[2px_8px] rounded">
+            <Icon name="map-pin" size={10} /> {cityLabel}
+          </span>
+
+          {/* Đã chơi (Expired status) */}
+          {isExpired && (
+            <span className="text-[0.7rem] font-bold text-[#4b5563] flex items-center gap-1 bg-[#f3f4f6] border border-[#4b5563] p-[2px_8px] rounded">
+              <Icon name="check" size={10} /> Đã chơi
+            </span>
+          )}
+
           {currentUser ? (
             <>
               {/* Status Badges */}
