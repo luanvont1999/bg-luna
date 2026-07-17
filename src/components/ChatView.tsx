@@ -213,7 +213,7 @@ export default function ChatView({ meetup, onBack }: Props) {
       ) : !hasChatAccess ? (
         <>
           {/* Top Fullscreen Header */}
-          <div className="chat-top-nav cartoon-card bg-pastelCyan flex items-center gap-3 p-3 md:p-[10px_16px] rounded-lg shadow-neo shrink-0">
+          <div className="chat-top-nav cartoon-card bg-pastelCyan flex items-center gap-4 p-[14px_20px] rounded-lg shadow-neo shrink-0">
             <button
               type="button"
               className="btn btn-secondary back-btn py-2 px-4 text-[0.95rem] whitespace-nowrap"
@@ -240,7 +240,7 @@ export default function ChatView({ meetup, onBack }: Props) {
           </div>
 
           {/* Access Denied Private Lock Screen */}
-          <div className="cartoon-card access-denied-card m-auto text-center p-6 bg-[#fffefb] max-w-[480px] flex flex-col items-center gap-4 border-3 border-[#1e1e24] shadow-neo rounded-2xl">
+          <div className="cartoon-card access-denied-card m-auto text-center p-[40px_24px] bg-[#fffefb] max-w-[480px] flex flex-col items-center gap-4 border-3 border-[#1e1e24] shadow-neo rounded-2xl">
             <div className="lock-big-icon text-[3.5rem]">
               <Icon name="lock" size={48} />
             </div>
@@ -334,7 +334,7 @@ export default function ChatView({ meetup, onBack }: Props) {
       ) : (
         <>
           {/* Top Fullscreen Header */}
-          <div className="chat-top-nav cartoon-card bg-pastelCyan flex items-center gap-3 p-3 md:p-[10px_16px] rounded-lg shadow-neo shrink-0">
+          <div className="chat-top-nav cartoon-card bg-pastelCyan flex items-center gap-4 p-[14px_20px] rounded-lg shadow-neo shrink-0">
             <button
               type="button"
               className="btn btn-secondary back-btn py-2 px-4 text-[0.95rem] whitespace-nowrap"
@@ -354,11 +354,11 @@ export default function ChatView({ meetup, onBack }: Props) {
 
           {/* Messages Container Area */}
           <div
-            className="chat-feed-area cartoon-card flex-1 bg-white overflow-y-auto p-3.5 md:p-4 rounded-lg shadow-neo border-3 border-[#1e1e24]"
+            className="chat-feed-area cartoon-card flex-1 bg-white overflow-y-auto p-5 flex flex-col rounded-lg shadow-neo border-3 border-[#1e1e24]"
             ref={messagesContainerRef}
           >
             {messages.length === 0 ? (
-              <div className="chat-empty-state m-auto text-center p-6 text-[#666666]">
+              <div className="chat-empty-state m-auto text-center p-[40px_20px] text-[#666666]">
                 <div className="empty-icon text-[3.5rem] mb-3">
                   <Icon name="chat" size={48} />
                 </div>
@@ -416,7 +416,7 @@ export default function ChatView({ meetup, onBack }: Props) {
           </div>
 
           {/* Bottom Fullscreen Input Bar */}
-          <div className="chat-bottom-bar cartoon-card bg-white p-3 md:p-[10px_16px] rounded-lg shadow-neo shrink-0 border-3 border-[#1e1e24]">
+          <div className="chat-bottom-bar cartoon-card bg-white p-[14px_20px] rounded-lg shadow-neo shrink-0 border-3 border-[#1e1e24]">
             {currentUser ? (
               <form
                 className="chat-input-form flex w-full gap-3"
@@ -424,7 +424,7 @@ export default function ChatView({ meetup, onBack }: Props) {
               >
                 <input
                   type="text"
-                  className="cartoon-chat-input flex-1 p-3 font-semibold text-base rounded-md border-3 border-[#1e1e24] bg-[#fbf7ed] outline-none shadow-[3px_3px_0_#1e1e24] transition-all duration-150 focus:bg-white focus:shadow-[4px_4px_0_#1e1e24]"
+                  className="cartoon-chat-input flex-1 p-4 font-semibold text-base rounded-md border-3 border-[#1e1e24] bg-[#fbf7ed] outline-none shadow-[3px_3px_0_#1e1e24] transition-all duration-150 focus:bg-white focus:shadow-[4px_4px_0_#1e1e24]"
                   placeholder="Nhập tin nhắn..."
                   value={newMessageText}
                   onChange={(e) => setNewMessageText(e.target.value)}
@@ -432,7 +432,7 @@ export default function ChatView({ meetup, onBack }: Props) {
                 />
                 <button
                   type="submit"
-                  className="btn btn-primary send-btn py-2.5 px-4 text-base whitespace-nowrap"
+                  className="btn btn-primary send-btn py-3 px-6 text-base whitespace-nowrap"
                   disabled={!newMessageText.trim() || isSending}
                 >
                   <Icon name="rocket" size={16} className="mr-1 inline" />

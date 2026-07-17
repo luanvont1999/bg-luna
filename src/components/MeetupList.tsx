@@ -75,7 +75,7 @@ export default function MeetupList({
       {isLoading ? (
         <div className="skeleton-meetup-list flex flex-col gap-4">
           {[1, 2, 3].map((n) => (
-            <div className="cartoon-card meetup-card skeleton-card bg-white p-4 border-3 border-[#1e1e24] rounded-2xl shadow-neo flex flex-col gap-3" key={n}>
+            <div className="cartoon-card meetup-card skeleton-card bg-white p-5 border-3 border-[#1e1e24] rounded-2xl shadow-neo flex flex-col gap-3.5" key={n}>
               <div className="skeleton skeleton-line long h-5 bg-gray-200 rounded w-2/3"></div>
               <div className="skeleton skeleton-line medium h-4 bg-gray-200 rounded w-1/2"></div>
               <div className="flex gap-2">
@@ -86,7 +86,7 @@ export default function MeetupList({
           ))}
         </div>
       ) : meetups.length === 0 ? (
-        <div className="cartoon-card empty-card text-center p-6 bg-white border-3 border-[#1e1e24] rounded-2xl shadow-neo flex flex-col items-center gap-3">
+        <div className="cartoon-card empty-card text-center p-10 bg-white border-3 border-[#1e1e24] rounded-2xl shadow-neo flex flex-col items-center gap-3">
           <div className="empty-state-icon text-[3.5rem]"><Icon name="dice" size={48} /></div>
           <h3 className="text-xl font-bold text-[#1e1e24]">Không tìm thấy kèo chơi phù hợp!</h3>
           <p className="text-sm font-semibold text-[#666666] max-w-[340px] leading-relaxed">
@@ -203,7 +203,7 @@ function MeetupCard({
 
   return (
     <div
-      className="cartoon-card meetup-card bg-white p-3.5 md:p-4 border-3 border-[#1e1e24] rounded-2xl shadow-neo flex flex-col gap-3 text-left transition-all duration-100 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[6px_6px_0px_#1e1e24]"
+      className="cartoon-card meetup-card bg-white p-5 border-3 border-[#1e1e24] rounded-2xl shadow-neo flex flex-col gap-3.5 text-left transition-all duration-100 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[6px_6px_0px_#1e1e24]"
       style={{ borderLeft: `8px solid ${meetup.color || "#bca0f5"}` }}
     >
       <div className="card-top-header flex justify-between items-start gap-3 w-full">
@@ -226,7 +226,7 @@ function MeetupCard({
         )}
       </div>
 
-      <div className="meetup-card-body flex flex-col gap-2 border-t-2 border-b-2 border-dashed border-[#1e1e24] py-2 text-xs font-semibold text-[#1e1e24]">
+      <div className="meetup-card-body flex flex-col gap-2 border-t-2 border-b-2 border-dashed border-[#1e1e24] py-3 text-xs font-semibold text-[#1e1e24]">
         <div className="meetup-info-row flex items-center gap-1.5">
           <Icon name="clock" size={13} className="inline text-[#666666]" />
           <span>Giờ chơi: <strong>{formatTime(meetup.time)}</strong></span>

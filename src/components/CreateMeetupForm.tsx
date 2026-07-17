@@ -286,7 +286,7 @@ export default function CreateMeetupForm({
   return (
     <div className="create-meetup-wrapper w-full max-w-[480px] mx-auto">
       {!user ? (
-        <div className="cartoon-card locked-card bg-[#ffebd1] border-[#1e1e24] p-5 text-center">
+        <div className="cartoon-card locked-card bg-[#ffebd1] border-[#1e1e24] p-[30px_24px] text-center">
           <div className="lock-header flex items-center justify-center gap-[10px] mb-[15px] text-[#92400e] font-bold text-lg">
             <Icon name="lock" size={24} />
             <h3>Lên Kèo Đang Bị Khóa</h3>
@@ -297,15 +297,15 @@ export default function CreateMeetupForm({
           <a href="#/profile" className="btn btn-primary inline-block">Đi đến Đăng nhập ngay</a>
         </div>
       ) : (
-        <div className="cartoon-card form-card bg-[#ffe869] p-4.5 text-left border-3 border-[#1e1e24] rounded-2xl shadow-neo">
+        <div className="cartoon-card form-card bg-[#ffe869] p-6 text-left border-3 border-[#1e1e24] rounded-2xl shadow-neo">
           {errorMessage && (
-            <div className="alert error-alert p-[8px_12px] rounded-md border-2 border-[#1e1e24] font-bold text-[0.9rem] mb-4 bg-[#ffccd3] text-[#b91c1c]">{errorMessage}</div>
+            <div className="alert error-alert p-[10px_14px] rounded-md border-2 border-[#1e1e24] font-bold text-[0.9rem] mb-4 bg-[#ffccd3] text-[#b91c1c]">{errorMessage}</div>
           )}
           {successMessage && (
-            <div className="alert success-alert p-[8px_12px] rounded-md border-2 border-[#1e1e24] font-bold text-[0.9rem] mb-4 bg-[#d1fae5] text-[#065f46]">{successMessage}</div>
+            <div className="alert success-alert p-[10px_14px] rounded-md border-2 border-[#1e1e24] font-bold text-[0.9rem] mb-4 bg-[#d1fae5] text-[#065f46]">{successMessage}</div>
           )}
 
-          <form onSubmit={handleSubmit} className="meetup-form flex flex-col gap-4.5">
+          <form onSubmit={handleSubmit} className="meetup-form flex flex-col gap-4">
             <div className="form-group flex flex-col gap-[6px]">
               <label htmlFor="meetup-title" className="font-extrabold text-[0.95rem] text-[#1e1e24]">Tên Kèo Chơi:</label>
               <input
@@ -315,7 +315,7 @@ export default function CreateMeetupForm({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={isSubmitting}
-                className="p-[8px_12px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24]"
+                className="p-[12px_14px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24]"
                 required
               />
             </div>
@@ -329,7 +329,7 @@ export default function CreateMeetupForm({
                 value={game}
                 onChange={(e) => setGame(e.target.value)}
                 disabled={isSubmitting}
-                className="p-[8px_12px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24]"
+                className="p-[12px_14px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24]"
                 required
               />
             </div>
@@ -342,7 +342,7 @@ export default function CreateMeetupForm({
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
                 disabled={isSubmitting}
-                className="p-[8px_12px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24]"
+                className="p-[12px_14px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24]"
                 required
               />
             </div>
@@ -359,7 +359,7 @@ export default function CreateMeetupForm({
                   value={playersNeeded}
                   onChange={(e) => setPlayersNeeded(Number(e.target.value))}
                   disabled={isSubmitting}
-                  className="p-[8px_12px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24]"
+                  className="p-[12px_14px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24]"
                   required
                 />
               </div>
@@ -371,7 +371,7 @@ export default function CreateMeetupForm({
                   value={estimatedDuration}
                   onChange={(e) => setEstimatedDuration(e.target.value)}
                   disabled={isSubmitting}
-                  className="p-[8px_12px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24]"
+                  className="p-[12px_14px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24]"
                 >
                   <option value="1 - 2 tiếng">1 - 2 tiếng</option>
                   <option value="2 - 3 tiếng">2 - 3 tiếng</option>
@@ -391,7 +391,7 @@ export default function CreateMeetupForm({
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
                 disabled={isSubmitting}
-                className="p-[8px_12px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24]"
+                className="p-[12px_14px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24]"
               ></textarea>
             </div>
 
@@ -407,12 +407,12 @@ export default function CreateMeetupForm({
                   onFocus={() => setShowDropdown(true)}
                   disabled={isSubmitting}
                   autoComplete="off"
-                  className="p-[8px_12px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24] flex-1 min-w-0"
+                  className="p-[12px_14px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24] flex-1 min-w-0"
                   required
                 />
                 <button
                   type="button"
-                  className="btn btn-secondary btn-map-select flex items-center gap-1 p-[8px_12px] text-sm whitespace-nowrap rounded-md border-3 border-[#1e1e24] shadow-[2px_2px_0_#1e1e24]"
+                  className="btn btn-secondary btn-map-select flex items-center gap-1 p-[10px_14px] text-sm whitespace-nowrap rounded-md border-3 border-[#1e1e24] shadow-[2px_2px_0_#1e1e24]"
                   onClick={() => navigate({ name: "map", mode: "select" })}
                   disabled={isSubmitting}
                 >

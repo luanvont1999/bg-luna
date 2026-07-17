@@ -85,7 +85,7 @@ a {
   width: 100%;
   max-width: 1100px;
   margin: 0 auto;
-  padding: 12px 10px;
+  padding: 20px 12px;
   height: calc(100vh - 80px);
   overflow-y: auto;
   box-sizing: border-box;
@@ -95,7 +95,7 @@ a {
 @media (max-width: 976px) {
   .route-container {
     height: calc(100vh - 64px);
-    padding: 10px 8px;
+    padding: 16px 12px;
   }
   
   .route-container.has-bottom-bar {
@@ -360,16 +360,10 @@ a {
   background-color: var(--bg-card);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 24px;
   box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--color-border);
   transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
-}
-
-@media (max-width: 976px) {
-  .cartoon-card {
-    padding: 12px;
-  }
 }
 
 .cartoon-card:hover {
