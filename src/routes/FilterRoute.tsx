@@ -5,15 +5,17 @@ import Icon from "../components/Icon";
 interface Props {
   selectedCities: ("HCM" | "HN" | "OTHER")[];
   selectedDistance: string;
+  sortBy: "time" | "distance";
   userLat: number | null;
   isTrackingGPS: boolean;
   gpsError: boolean;
-  onApply: (cities: ("HCM" | "HN" | "OTHER")[], distance: string) => void;
+  onApply: (cities: ("HCM" | "HN" | "OTHER")[], distance: string, sortBy: "time" | "distance") => void;
 }
 
 export default function FilterRoute({
   selectedCities = [],
   selectedDistance = "all",
+  sortBy = "time",
   userLat,
   isTrackingGPS,
   gpsError,
@@ -22,14 +24,16 @@ export default function FilterRoute({
   const [tempCities, setTempCities] =
     useState<("HCM" | "HN" | "OTHER")[]>(selectedCities);
   const [tempDistance, setTempDistance] = useState<string>(selectedDistance);
+  const [tempSortBy, setTempSortBy] = useState<"time" | "distance">(sortBy);
 
   useEffect(() => {
     setTempCities(selectedCities);
     setTempDistance(selectedDistance);
-  }, [selectedCities, selectedDistance]);
+    setTempSortBy(sortBy);
+  }, [selectedCities, selectedDistance, sortBy]);
 
   function handleApply() {
-    onApply(tempCities, tempDistance);
+    onApply(tempCities, tempDistance, tempSortBy);
     goBack();
   }
 
@@ -148,6 +152,54 @@ export default function FilterRoute({
             <p className="gps-warning-hint text-xs font-bold text-[#dc2626] mt-1 flex items-center gap-1.5">
               <Icon name="alert-triangle" size={14} /> Cần bật vị trí (GPS) để
               lọc theo bán kính km.
+            </p>
+          )}
+        </div>
+
+        {/* Sorting Selection Row - RADIOS */}
+        <div className="filter-section mt-6 flex flex-col gap-3">
+          <h3 className="section-title-label text-sm font-bold text-[#1e1e24] flex items-center gap-1.5 m-0">
+            <Icon name="sort-desc" size={16} /> Sắp xếp danh sách kèo:
+          </h3>
+          <div className="flex flex-col gap-2.5 mt-1">
+            {[
+              { id: "time" as const, name: "Thời gian bắt đầu gần nhất", icon: "clock" },
+              { id: "distance" as const, name: "Vị trí địa lý gần nhất", icon: "map-pin" },
+            ].map((opt) => {
+              const isSelected = tempSortBy === opt.id;
+              const isDisabled = opt.id === "distance" && userLat === null;
+              return (
+                <div
+                  key={opt.id}
+                  className={`flex items-center gap-3 p-3.5 rounded-lg border-3 border-[#1e1e24] transition-all duration-100 ${
+                    isDisabled
+                      ? "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed shadow-none"
+                      : isSelected
+                        ? "bg-[#bca0f5] translate-x-[2px] translate-y-[2px] shadow-[1px_1px_0px_#1e1e24] cursor-pointer"
+                        : "bg-white shadow-[4px_4px_0px_#1e1e24] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_#1e1e24] cursor-pointer"
+                  }`}
+                  onClick={() => !isDisabled && setTempSortBy(opt.id)}
+                >
+                  {/* Custom Radio Circle */}
+                  <div
+                    className={`w-5 h-5 border-3 rounded-full bg-white flex items-center justify-center shrink-0 ${
+                      isDisabled ? "border-gray-300" : "border-[#1e1e24]"
+                    }`}
+                  >
+                    {isSelected && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#1e1e24]" />
+                    )}
+                  </div>
+                  <Icon name={opt.icon} size={15} />
+                  <span className="font-extrabold text-sm">{opt.name}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {userLat === null && tempSortBy === "distance" && (
+            <p className="gps-warning-hint text-xs font-bold text-[#dc2626] mt-1 flex items-center gap-1.5">
+              <Icon name="alert-triangle" size={14} /> Cần định vị GPS để sắp xếp theo khoảng cách.
             </p>
           )}
         </div>

@@ -8,7 +8,8 @@ export function useMeetupsRealtime(
   selectedCities?: ("HCM" | "HN" | "OTHER")[],
   selectedDistance: string = "all",
   userLat: number | null = null,
-  userLng: number | null = null
+  userLng: number | null = null,
+  sortBy: "time" | "distance" = "time"
 ) {
   const [allMeetups, setAllMeetups] = useState<any[]>([]);
   const [hasLoadedInitialMeetups, setHasLoadedInitialMeetups] = useState<boolean>(false);
@@ -64,6 +65,19 @@ export function useMeetupsRealtime(
               }
               return true;
             });
+            
+            // Client-side sorting
+            filtered.sort((a: any, b: any) => {
+              if (sortBy === "distance" && userLat !== null && userLng !== null) {
+                const distA = calculateDistance(userLat, userLng, a.lat || 0, a.lng || 0);
+                const distB = calculateDistance(userLat, userLng, b.lat || 0, b.lng || 0);
+                return distA - distB;
+              } else {
+                const timeA = new Date(a.time || 0).getTime();
+                const timeB = new Date(b.time || 0).getTime();
+                return timeA - timeB;
+              }
+            });
 
             setAllMeetups(filtered);
           }
@@ -97,6 +111,19 @@ export function useMeetupsRealtime(
               }
               return true;
             });
+            
+            // Client-side sorting for fallback
+            filtered.sort((a: any, b: any) => {
+              if (sortBy === "distance" && userLat !== null && userLng !== null) {
+                const distA = calculateDistance(userLat, userLng, a.lat || 0, a.lng || 0);
+                const distB = calculateDistance(userLat, userLng, b.lat || 0, b.lng || 0);
+                return distA - distB;
+              } else {
+                const timeA = new Date(a.time || 0).getTime();
+                const timeB = new Date(b.time || 0).getTime();
+                return timeA - timeB;
+              }
+            });
 
             setAllMeetups(filtered);
           } else {
@@ -112,7 +139,7 @@ export function useMeetupsRealtime(
     );
 
     return unsubscribe;
-  }, [citiesKey, selectedDistance, userLat, userLng, authUid]);
+  }, [citiesKey, selectedDistance, userLat, userLng, authUid, sortBy]);
 
   return { allMeetups, isLoading: !hasLoadedInitialMeetups };
 }

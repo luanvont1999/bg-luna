@@ -85,6 +85,9 @@ export default function App() {
   const [selectedDistance, setSelectedDistance] = useState<string>(() => {
     return localStorage.getItem("filter_distance") || "all";
   });
+  const [sortBy, setSortBy] = useState<"time" | "distance">((() => {
+    return (localStorage.getItem("filter_sort_by") as "time" | "distance") || "time";
+  }));
 
   // GPS Tracker hook
   const { userLat, userLng, isTrackingGPS, gpsError } = useGPS();
@@ -104,18 +107,20 @@ export default function App() {
     triggerPWAInstall,
   } = usePWAInstall(addToast);
 
-  // Sync city & distance filters
+  // Sync city, distance & sort filters
   useEffect(() => {
     localStorage.setItem("filter_cities", JSON.stringify(selectedCities));
     localStorage.setItem("filter_distance", selectedDistance);
-  }, [selectedCities, selectedDistance]);
+    localStorage.setItem("filter_sort_by", sortBy);
+  }, [selectedCities, selectedDistance, sortBy]);
 
   // Fetch filtered meetups directly using active database queries when possible
   const { allMeetups: filteredMeetups, isLoading: isFilteredLoading } = useMeetupsRealtime(
     selectedCities,
     selectedDistance,
     userLat,
-    userLng
+    userLng,
+    sortBy
   );
 
   // Total pending requests
@@ -289,12 +294,14 @@ export default function App() {
           <FilterRoute
             selectedCities={selectedCities}
             selectedDistance={selectedDistance}
+            sortBy={sortBy}
             userLat={userLat}
             isTrackingGPS={isTrackingGPS}
             gpsError={gpsError}
-            onApply={(cities, dist) => {
+            onApply={(cities, dist, sort) => {
               setSelectedCities(cities);
               setSelectedDistance(dist);
+              setSortBy(sort);
             }}
           />
         );
