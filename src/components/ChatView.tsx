@@ -202,7 +202,7 @@ export default function ChatView({ meetup, onBack }: Props) {
   }
 
   return (
-    <div className="fullscreen-chat-view flex flex-col h-[calc(100vh-120px)] md:h-[calc(100vh-160px)] gap-4 w-full">
+    <div className="fullscreen-chat-view flex flex-col h-full gap-4 w-full">
       {!meetup ? (
         <div className="cartoon-card no-chat-card m-auto text-center p-10 bg-white">
           <h3 className="text-xl font-bold mb-4">Chưa chọn kèo chơi nào!</h3>
