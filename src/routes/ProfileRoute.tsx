@@ -170,7 +170,7 @@ export default function ProfileRoute({
             </div>
 
             <div className="form-group flex flex-col gap-2">
-              <span className="form-label font-bold text-[0.95rem] text-[#1e1e24]">Thể loại boardgame yêu thích:</span>
+              <span className="form-label font-bold text-[0.95rem] text-[#1e1e24]">Thể loại boardgame yêu thích (Chọn nhiều):</span>
               <div className="categories-chips-grid flex flex-wrap gap-2.5 mt-1">
                 {BOARDGAME_CATEGORIES.map((cat) => {
                   const isSelected = favoriteCategories.includes(cat.id);
@@ -178,12 +178,18 @@ export default function ProfileRoute({
                     <button
                       key={cat.id}
                       type="button"
-                      className={`category-chip-btn py-2 px-3.5 text-[0.85rem] font-bold border-3 border-[#1e1e24] rounded-full cursor-pointer transition-all duration-100 outline-none bg-white shadow-[3px_3px_0_#1e1e24] flex items-center gap-1.5 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_#1e1e24] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none ${
-                        isSelected ? "bg-pastelYellow shadow-[2px_2px_0_#1e1e24] translate-x-[1px] translate-y-[1px]" : ""
+                      className={`category-chip-btn flex items-center gap-2 py-2 px-3.5 text-[0.85rem] font-bold border-3 border-[#1e1e24] rounded-lg cursor-pointer transition-all duration-100 outline-none ${
+                        isSelected
+                          ? "bg-pastelYellow translate-x-[2px] translate-y-[2px] shadow-[1px_1px_0_#1e1e24]"
+                          : "bg-white shadow-[3px_3px_0_#1e1e24] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_#1e1e24] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_#1e1e24]"
                       }`}
                       onClick={() => toggleCategory(cat.id)}
                     >
-                      <Icon name={cat.icon} size={15} className="chip-icon inline" />
+                      {/* Custom Checkbox Indicator */}
+                      <div className="w-4 h-4 border-2 border-[#1e1e24] bg-white rounded flex items-center justify-center shrink-0">
+                        {isSelected && <Icon name="check" size={10} className="text-[#1e1e24] font-extrabold" />}
+                      </div>
+                      <Icon name={cat.icon} size={14} className="chip-icon inline" />
                       <span>{cat.label}</span>
                     </button>
                   );

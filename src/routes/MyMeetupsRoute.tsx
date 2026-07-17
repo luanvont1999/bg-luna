@@ -48,7 +48,9 @@ export default function MyMeetupsRoute({
   isLoading = false,
 }: Props) {
   const [currentUser, setCurrentUser] = useState<User | null>(auth.currentUser);
-  const [activeTab, setActiveTab] = useState<"all" | "host" | "member" | "pending">("all");
+  const [selectedStatuses, setSelectedStatuses] = useState<("host" | "member" | "pending")[]>(
+    ["host", "member", "pending"]
+  );
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -56,6 +58,12 @@ export default function MyMeetupsRoute({
     });
     return unsub;
   }, []);
+
+  const toggleStatus = (status: "host" | "member" | "pending") => {
+    setSelectedStatuses((prev) =>
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
+    );
+  };
 
   // Filter meetups related to current user
   const myMeetups = currentUser
@@ -67,18 +75,9 @@ export default function MyMeetupsRoute({
           (Array.isArray(m.pendingUids) && m.pendingUids.includes(uid)) ||
           (Array.isArray(m.approvedPendingUids) && m.approvedPendingUids.includes(uid));
 
-        if (activeTab === "all") {
-          return isUserHost || isUserMember || isUserPending;
-        }
-        if (activeTab === "host") {
-          return isUserHost;
-        }
-        if (activeTab === "member") {
-          return isUserMember && !isUserHost;
-        }
-        if (activeTab === "pending") {
-          return isUserPending;
-        }
+        if (isUserHost && selectedStatuses.includes("host")) return true;
+        if (isUserMember && !isUserHost && selectedStatuses.includes("member")) return true;
+        if (isUserPending && selectedStatuses.includes("pending")) return true;
         return false;
       })
     : [];
@@ -89,50 +88,36 @@ export default function MyMeetupsRoute({
 
       {currentUser ? (
         <>
-          {/* Tab Filter Bar (Neo-brutalist Style) */}
-          <div className="cartoon-card my-meetups-filter mb-6 p-[15px] bg-[#fffefb] flex flex-wrap gap-2.5 justify-center items-center">
-            <span className="filter-label font-extrabold text-[0.95rem] mr-2 text-[#1e1e24]">Lọc kèo:</span>
-            <div className="tab-btn-group flex flex-wrap gap-2">
-              <button
-                type="button"
-                className={`tab-btn-pill py-2 px-4 text-[0.85rem] font-bold border-3 border-[#1e1e24] rounded-full cursor-pointer transition-all duration-100 outline-none bg-white shadow-[3px_3px_0_#1e1e24] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_#1e1e24] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none ${
-                  activeTab === "all" ? "bg-pastelYellow shadow-[2px_2px_0_#1e1e24] translate-x-[1px] translate-y-[1px]" : ""
-                }`}
-                onClick={() => setActiveTab("all")}
-              >
-                <Icon name="dice" size={15} className="mr-1 inline" />
-                <span>Tất cả kèo</span>
-              </button>
-              <button
-                type="button"
-                className={`tab-btn-pill py-2 px-4 text-[0.85rem] font-bold border-3 border-[#1e1e24] rounded-full cursor-pointer transition-all duration-100 outline-none bg-white shadow-[3px_3px_0_#1e1e24] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_#1e1e24] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none ${
-                  activeTab === "host" ? "bg-pastelYellow shadow-[2px_2px_0_#1e1e24] translate-x-[1px] translate-y-[1px]" : ""
-                }`}
-                onClick={() => setActiveTab("host")}
-              >
-                <Icon name="crown" size={15} className="mr-1 inline" />
-                <span>Tôi làm Host</span>
-              </button>
-              <button
-                type="button"
-                className={`tab-btn-pill py-2 px-4 text-[0.85rem] font-bold border-3 border-[#1e1e24] rounded-full cursor-pointer transition-all duration-100 outline-none bg-white shadow-[3px_3px_0_#1e1e24] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_#1e1e24] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none ${
-                  activeTab === "member" ? "bg-pastelYellow shadow-[2px_2px_0_#1e1e24] translate-x-[1px] translate-y-[1px]" : ""
-                }`}
-                onClick={() => setActiveTab("member")}
-              >
-                <Icon name="check-circle" size={15} className="mr-1 inline" />
-                <span>Đã tham gia</span>
-              </button>
-              <button
-                type="button"
-                className={`tab-btn-pill py-2 px-4 text-[0.85rem] font-bold border-3 border-[#1e1e24] rounded-full cursor-pointer transition-all duration-100 outline-none bg-white shadow-[3px_3px_0_#1e1e24] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_#1e1e24] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none ${
-                  activeTab === "pending" ? "bg-pastelYellow shadow-[2px_2px_0_#1e1e24] translate-x-[1px] translate-y-[1px]" : ""
-                }`}
-                onClick={() => setActiveTab("pending")}
-              >
-                <Icon name="clock" size={15} className="mr-1 inline" />
-                <span>Đang chờ duyệt</span>
-              </button>
+          {/* Tab Filter Bar (Neo-brutalist Checkbox Style) */}
+          <div className="cartoon-card my-meetups-filter mb-6 p-[18px] bg-[#fffefb] flex flex-col md:flex-row gap-3 items-start md:items-center">
+            <span className="filter-label font-extrabold text-[0.95rem] text-[#1e1e24] shrink-0">Lọc theo vai trò (Chọn nhiều):</span>
+            <div className="tab-btn-group flex flex-wrap gap-3 w-full md:w-auto">
+              {[
+                { id: "host" as const, label: "Tôi làm Host", icon: "crown" },
+                { id: "member" as const, label: "Đã tham gia", icon: "check-circle" },
+                { id: "pending" as const, label: "Đang chờ duyệt", icon: "clock" },
+              ].map((opt) => {
+                const isSelected = selectedStatuses.includes(opt.id);
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    className={`filter-checkbox-btn flex items-center gap-2 py-2 px-4 text-[0.85rem] font-bold border-3 border-[#1e1e24] rounded-lg cursor-pointer transition-all duration-100 outline-none ${
+                      isSelected
+                        ? "bg-pastelYellow translate-x-[2px] translate-y-[2px] shadow-[1px_1px_0_#1e1e24]"
+                        : "bg-white shadow-[3px_3px_0_#1e1e24] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0_#1e1e24] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_#1e1e24]"
+                    }`}
+                    onClick={() => toggleStatus(opt.id)}
+                  >
+                    {/* Custom Checkbox Square */}
+                    <div className="w-4 h-4 border-2 border-[#1e1e24] bg-white rounded flex items-center justify-center shrink-0">
+                      {isSelected && <Icon name="check" size={10} className="text-[#1e1e24] font-extrabold" />}
+                    </div>
+                    <Icon name={opt.icon} size={14} className="chip-icon inline" />
+                    <span>{opt.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
