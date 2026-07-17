@@ -12,8 +12,10 @@ import {
 } from "../api/meetupService";
 import { goBack, navigate } from "../libs/router";
 import Icon from "../components/Icon";
-
 import { type User } from "firebase/auth";
+import { deleteDoc, doc } from "firebase/firestore";
+import { db } from "../libs/firebase";
+import { notifyMeetupCancellation } from "../api/notificationService";
 
 interface Meetup {
   id: string;
@@ -133,6 +135,49 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
       alert("Đã rời kèo chơi thành công.");
     } catch (e: any) {
       alert(e.message || "Không thể rời kèo!");
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+
+  async function handleDeleteMeetup() {
+    if (!meetup?.id || !currentUser || isProcessing) return;
+    if (
+      !window.confirm(
+        "CẢNH BÁO: Bạn có chắc chắn muốn hủy kèo chơi này? Hành động này sẽ xoá hoàn toàn kèo và gửi thông báo đẩy đến tất cả người chơi!"
+      )
+    )
+      return;
+
+    setIsProcessing(true);
+    try {
+      // Thu thập tất cả các UIDs của người chơi liên quan
+      const playerUids = Array.from(
+        new Set([
+          ...(meetup.approvedUids || []),
+          ...(meetup.approvedPendingUids || []),
+          ...(meetup.pendingUids || []),
+          ...requests.map((r) => r.uid),
+        ])
+      );
+
+      const hostName = currentUser.displayName || currentUser.email || "Host";
+      // Gửi thông báo đẩy hủy kèo
+      await notifyMeetupCancellation(
+        meetup.title,
+        meetup.game,
+        playerUids,
+        currentUser.uid,
+        hostName
+      );
+
+      // Xoá tài liệu khỏi Firestore
+      await deleteDoc(doc(db, "meetups", meetup.id));
+
+      alert("Hủy kèo chơi thành công! Đã gửi thông báo đẩy tới người chơi.");
+      goBack();
+    } catch (e: any) {
+      alert(e.message || "Không thể hủy kèo chơi!");
     } finally {
       setIsProcessing(false);
     }
@@ -287,6 +332,14 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
                     >
                       <Icon name="chat" size={15} className="inline" /> Vào chat
                       box thảo luận
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary py-2.5 px-5 font-bold bg-[#ffa4b2] text-[#1e1e24] border-3 border-[#1e1e24] shadow-neo active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:bg-[#ff8f9f] transition-all duration-100"
+                      onClick={handleDeleteMeetup}
+                      disabled={isProcessing}
+                    >
+                      <Icon name="trash-2" size={15} className="inline" /> Hủy kèo chơi này
                     </button>
                     <span className="text-xs font-extrabold text-pastelPurple bg-[#f3e8ff] border-2 border-pastelPurple p-[4px_10px] rounded">
                       ★ Bạn đang quản lý kèo này với tư cách Host

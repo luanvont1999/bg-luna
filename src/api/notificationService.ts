@@ -179,3 +179,52 @@ export async function notifyMeetupChatMembers(
     console.error('[FCM Chat Notification Error]:', err);
   }
 }
+
+/**
+ * Gửi thông báo đẩy tới tất cả thành viên trong kèo khi kèo bị hủy bởi Host.
+ */
+export async function notifyMeetupCancellation(
+  meetupTitle: string,
+  gameName: string,
+  memberUids: string[],
+  hostUid: string,
+  hostName: string
+) {
+  try {
+    const targetUids = Array.from(new Set(memberUids)).filter((uid) => uid && uid !== hostUid);
+    if (targetUids.length === 0) return;
+
+    const tokenPromises = targetUids.map(async (uid) => {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', uid));
+        if (userDoc.exists() && userDoc.data()?.fcmToken) {
+          return userDoc.data().fcmToken as string;
+        }
+      } catch (e) {
+        console.warn(`[FCM Cancellation] Failed to fetch token for user ${uid}:`, e);
+      }
+      return null;
+    });
+
+    const tokens = (await Promise.all(tokenPromises)).filter((t): t is string => Boolean(t));
+    if (tokens.length === 0) return;
+
+    const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_URL || '') : '';
+    const title = `🚫 Kèo chơi đã bị huỷ!`;
+    const body = `Kèo "${meetupTitle}" (Game: ${gameName}) đã bị huỷ bởi Host ${hostName}.`;
+
+    await fetch(`${API_BASE}/api/send-notification`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fcmTokens: tokens,
+        title,
+        body,
+        clickAction: `/#/`
+      })
+    });
+    console.log(`[FCM Cancellation Notification] Sent cancellation notification to ${tokens.length} members.`);
+  } catch (err) {
+    console.error('[FCM Cancellation Notification Error]:', err);
+  }
+}
