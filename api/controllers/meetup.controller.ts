@@ -8,12 +8,19 @@ import {
   updateFirestoreRequestStatus,
   deleteFirestoreRequest,
   Meetup,
+  getFirestoreAllMeetups,
 } from "../models/meetup.model.js";
 import { sendFCMNotification, getUserFCMToken } from "../models/notification.model.js";
 
 // GET /api/meetups
 export async function getAllMeetups(req: Request, res: Response) {
-  res.json(meetupStore.getAll());
+  try {
+    const list = await getFirestoreAllMeetups();
+    res.json(list);
+  } catch (err: any) {
+    console.error("[Backend REST] Failed to get all meetups:", err);
+    res.status(500).json({ error: "Lỗi kết nối Firestore: " + err.message });
+  }
 }
 
 // POST /api/meetups/create

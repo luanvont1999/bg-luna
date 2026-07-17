@@ -160,7 +160,7 @@ a {
 }
 
 /* Mobile Navbar (Header only for title/logo, hiding menus) */
-@media (max-width: 768px) {
+@media (max-width: 976px) {
   .navbar {
     height: 64px;
   }
@@ -188,7 +188,7 @@ a {
   overflow: hidden;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 976px) {
   .mobile-nav-bar {
     display: flex;
     justify-content: space-around;

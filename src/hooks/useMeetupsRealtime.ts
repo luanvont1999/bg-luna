@@ -74,10 +74,40 @@ export function useMeetupsRealtime(
           setHasLoadedInitialMeetups(true);
         }
       },
-      (err) => {
-        console.error("[Firestore] meetups subscription error:", err);
-        setAllMeetups((prev) => (prev.length === 0 ? [] : prev));
-        setHasLoadedInitialMeetups(true);
+      async (err) => {
+        console.warn("[Firestore] meetups subscription error, falling back to REST API:", err);
+        try {
+          const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_URL || "") : "";
+          const res = await fetch(`${API_BASE}/api/meetups`);
+          if (res.ok) {
+            const list = await res.json();
+            
+            // Client-side filtering
+            const filtered = list.filter((m: any) => {
+              if (selectedCities && selectedCities.length > 0) {
+                const calculatedCity = m.city || getMeetupCity(m);
+                if (!selectedCities.includes(calculatedCity)) return false;
+              }
+              
+              if (selectedDistance !== "all" && userLat !== null && userLng !== null) {
+                const lat = m.lat !== undefined ? m.lat : 0;
+                const lng = m.lng !== undefined ? m.lng : 0;
+                const dist = calculateDistance(userLat, userLng, lat, lng);
+                return dist <= parseFloat(selectedDistance);
+              }
+              return true;
+            });
+
+            setAllMeetups(filtered);
+          } else {
+            setAllMeetups([]);
+          }
+        } catch (fetchErr) {
+          console.error("[Firestore Fallback] Failed to fetch meetups from API:", fetchErr);
+          setAllMeetups([]);
+        } finally {
+          setHasLoadedInitialMeetups(true);
+        }
       }
     );
 

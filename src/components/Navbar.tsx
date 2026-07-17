@@ -12,16 +12,17 @@ interface Props {
 }
 
 const getEnvInfo = () => {
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const hostname =
+    typeof window !== "undefined" ? window.location.hostname : "";
   if (hostname === "localhost" || hostname === "127.0.0.1") {
     return { name: "LOCAL", color: "#ffe869" }; // Pastel yellow
   }
-  
+
   const env = import.meta.env.VITE_APP_ENV || "";
   if (env === "production" && !hostname.includes("vercel.app")) {
     return { name: "PROD", color: "#86efac" }; // Pastel green
   }
-  
+
   return { name: "DEV", color: "#ffb3ba" }; // Pastel pink/rose (for Vercel Preview/Dev)
 };
 
@@ -48,7 +49,15 @@ export default function Navbar({
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" fill="currentColor" />
+            <rect
+              x="3"
+              y="3"
+              width="18"
+              height="18"
+              rx="2"
+              ry="2"
+              fill="currentColor"
+            />
             <circle cx="8" cy="8" r="1.5" fill="#fff" />
             <circle cx="16" cy="16" r="1.5" fill="#fff" />
             <circle cx="16" cy="8" r="1.5" fill="#fff" />
@@ -111,7 +120,9 @@ export default function Navbar({
               onClick={() => navigateToTab("create")}
             >
               Lên kèo
-              {totalPendingRequests > 0 && <span className="nav-badge">{totalPendingRequests}</span>}
+              {totalPendingRequests > 0 && (
+                <span className="nav-badge">{totalPendingRequests}</span>
+              )}
             </button>
           </li>
           <li>
@@ -123,28 +134,6 @@ export default function Navbar({
             </button>
           </li>
         </ul>
-
-        <div className="desktop-nav-btn flex gap-2.5">
-          {(deferredPrompt || (isIOS && !isStandalone)) && (
-            <button
-              className="btn btn-primary"
-              style={{
-                backgroundColor: "var(--pastel-yellow, #ffe869)",
-                color: "#1e1e24",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-              onClick={onTriggerInstall}
-            >
-              <Icon name="smartphone" size={16} />
-              <span>Tải App</span>
-            </button>
-          )}
-          <button className="btn btn-primary" onClick={() => navigateToTab("profile")}>
-            Tài khoản
-          </button>
-        </div>
       </div>
     </header>
   );

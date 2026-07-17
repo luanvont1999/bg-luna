@@ -421,3 +421,58 @@ export async function deleteFirestoreRequest(meetupId: string, userUid: string):
     throw err;
   }
 }
+
+export async function getFirestoreAllMeetups(): Promise<any[]> {
+  const { accessToken, projectId } = await getAccessToken();
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/meetups`;
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!res.ok) {
+    if (res.status === 404) return [];
+    const text = await res.text();
+    throw new Error(`Firestore list failed status ${res.status}: ${text}`);
+  }
+
+  const data = (await res.json()) as { documents?: FirestoreDocument[] };
+  if (!data.documents) return [];
+
+  return data.documents.map((doc) => {
+    const parsed = parseFirestoreDocument(doc);
+    
+    const latVal = doc.fields.lat;
+    let lat = 0;
+    if (latVal) {
+      lat = latVal.integerValue ? parseInt(latVal.integerValue) : (latVal.doubleValue !== undefined ? latVal.doubleValue : (latVal.stringValue ? parseFloat(latVal.stringValue) : 0));
+    }
+
+    const lngVal = doc.fields.lng;
+    let lng = 0;
+    if (lngVal) {
+      lng = lngVal.integerValue ? parseInt(lngVal.integerValue) : (lngVal.doubleValue !== undefined ? lngVal.doubleValue : (lngVal.stringValue ? parseFloat(lngVal.stringValue) : 0));
+    }
+
+    const city = doc.fields.city?.stringValue || "";
+
+    return {
+      id: parsed.id,
+      title: parsed.title,
+      game: parsed.game,
+      hostName: parsed.hostName,
+      hostUid: parsed.hostUID,
+      lat,
+      lng,
+      city,
+      playersCount: parsed.playersCount,
+      playersNeeded: parsed.playersNeeded,
+      time: parsed.time,
+      color: parsed.color,
+      pendingUids: parsed.pendingUids,
+      approvedPendingUids: parsed.approvedPendingUids,
+      approvedUids: parsed.approvedUids,
+      userFcmTokens: parsed.userFcmTokens,
+    };
+  });
+}
