@@ -21,6 +21,7 @@ import {
 } from "../api/meetupService";
 import { notifyMeetupChatMembers } from "../api/notificationService";
 import { formatMessageTime } from "../utils/time";
+import { navigate } from "../libs/router";
 
 interface Meetup {
   id: string;
@@ -391,7 +392,10 @@ export default function ChatView({ meetup, onBack }: Props) {
                         }`}
                       >
                         <div className="message-author flex items-center gap-2">
-                          <span className="author-name text-[0.82rem] font-extrabold text-[#1e1e24]">
+                          <span 
+                            className="author-name text-[0.82rem] font-extrabold text-[#1e1e24] hover:underline cursor-pointer"
+                            onClick={() => navigate({ name: "user-profile", userId: msg.senderUid })}
+                          >
                             {msg.senderName}
                           </span>
                           {isHost && (

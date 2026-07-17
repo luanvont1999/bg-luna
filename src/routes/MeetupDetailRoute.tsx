@@ -464,7 +464,10 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
                           <span className="user-icon flex items-center justify-center">
                             <Icon name="user" size={18} />
                           </span>
-                          <span className="user-name text-[1rem] font-extrabold">
+                          <span 
+                            className="user-name text-[1rem] font-extrabold hover:underline cursor-pointer"
+                            onClick={() => navigate({ name: "user-profile", userId: req.uid })}
+                          >
                             {req.name}
                           </span>
                         </div>
@@ -509,7 +512,10 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
                     <span className="user-icon flex items-center justify-center">
                       <Icon name="user" size={18} />
                     </span>
-                    <span className="user-name text-[0.98rem] font-extrabold">
+                    <span 
+                      className="user-name text-[0.98rem] font-extrabold hover:underline cursor-pointer"
+                      onClick={() => hostUid && navigate({ name: "user-profile", userId: hostUid })}
+                    >
                       {meetup.hostName || meetup.host_name || "Ẩn danh"}
                     </span>
                     <span className="text-xs text-pastelPurple font-bold">
@@ -528,7 +534,10 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
                       <span className="user-icon flex items-center justify-center">
                         <Icon name="user" size={18} />
                       </span>
-                      <span className="user-name text-[0.98rem] font-extrabold">
+                      <span 
+                        className="user-name text-[0.98rem] font-extrabold hover:underline cursor-pointer"
+                        onClick={() => navigate({ name: "user-profile", userId: req.uid })}
+                      >
                         {req.name}
                       </span>
                     </div>
@@ -571,7 +580,10 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
                         <span className="user-icon flex items-center justify-center text-[#d97706]">
                           <Icon name="user" size={18} />
                         </span>
-                        <span className="user-name text-[0.98rem] font-extrabold">
+                        <span 
+                          className="user-name text-[0.98rem] font-extrabold hover:underline cursor-pointer"
+                          onClick={() => navigate({ name: "user-profile", userId: req.uid })}
+                        >
                           {req.name}
                         </span>
                       </div>

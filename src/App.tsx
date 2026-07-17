@@ -31,6 +31,7 @@ import FilterRoute from "./routes/FilterRoute";
 import ChatRoute from "./routes/ChatRoute";
 import ChatsListRoute from "./routes/ChatsListRoute";
 import MeetupDetailRoute from "./routes/MeetupDetailRoute";
+import UserProfileRoute from "./routes/UserProfileRoute";
 
 import { calculateDistance, getMeetupCity } from "./utils/geo";
 
@@ -314,6 +315,10 @@ export default function App() {
             currentUser={currentUser}
             isLoading={isMeetupsLoading}
           />
+        );
+      case "user-profile":
+        return (
+          <UserProfileRoute userId={route.userId} />
         );
       default:
         return (
