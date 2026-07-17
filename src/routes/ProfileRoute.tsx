@@ -4,7 +4,7 @@ import Icon from "../components/Icon";
 import { auth } from "../libs/firebase";
 import { onAuthStateChanged, updateProfile, type User } from "firebase/auth";
 import { useUserProfile, userProfileState } from "../libs/userProfile";
-import { broadcastPushNotifications } from "../api/notificationService";
+
 
 
 interface Props {
@@ -221,111 +221,7 @@ export default function ProfileRoute({
         )}
       </div>
 
-      {/* Admin Broadcast Section */}
-      {currentUser && (
-        <AdminBroadcastSection addToast={addToast} />
-      )}
     </section>
-  );
-}
-
-interface BroadcastProps {
-  addToast: (msg: string, type: "success" | "error" | "info") => void;
-}
-
-function AdminBroadcastSection({ addToast }: BroadcastProps) {
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [url, setUrl] = useState("/");
-  const [isSending, setIsSending] = useState(false);
-
-  async function handleBroadcast(e: React.FormEvent) {
-    e.preventDefault();
-    if (!title || !body) {
-      addToast("Vui lòng nhập tiêu đề và nội dung thông báo!", "error");
-      return;
-    }
-
-    setIsSending(true);
-    try {
-      const result = await broadcastPushNotifications(title, body, url);
-      
-      if (result.success) {
-        addToast(result.message, "success");
-        setTitle("");
-        setBody("");
-        setUrl("/");
-      } else {
-        addToast("Broadcast thất bại: " + result.message, "error");
-      }
-    } catch (err: any) {
-      console.error("Lỗi broadcast:", err);
-      addToast("Lỗi kết nối API broadcast: " + err.message, "error");
-    } finally {
-      setIsSending(false);
-    }
-  }
-
-  return (
-    <div className="admin-broadcast-section mt-10">
-      <h3 className="profile-section-heading text-lg font-bold text-[#666666] mb-4 uppercase flex items-center gap-2">
-        <Icon name="bell" size={18} className="inline" /> Phát thông báo (Broadcast)
-      </h3>
-      <form onSubmit={handleBroadcast} className="cartoon-card bg-[#fffefb] p-6 text-left flex flex-col gap-5 border-3 border-[#1e1e24] rounded-2xl shadow-neo">
-        <p className="text-xs font-semibold text-[#666666] leading-relaxed">
-          Gửi thông báo đẩy tức thì tới **tất cả thiết bị** đã cài đặt PWA và đăng ký nhận tin của hệ thống. 
-        </p>
-
-        <div className="form-group flex flex-col gap-2">
-          <label htmlFor="broadcastTitle" className="font-bold text-[0.95rem] text-[#1e1e24]">Tiêu đề thông báo:</label>
-          <input
-            type="text"
-            id="broadcastTitle"
-            placeholder="Ví dụ: Kèo Avalon tối nay cần thêm 3 chân..."
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="p-3 font-semibold text-base rounded-md border-3 border-[#1e1e24] bg-white outline-none shadow-[3px_3px_0_#1e1e24]"
-            required
-          />
-        </div>
-
-        <div className="form-group flex flex-col gap-2">
-          <label htmlFor="broadcastBody" className="font-bold text-[0.95rem] text-[#1e1e24]">Nội dung:</label>
-          <textarea
-            id="broadcastBody"
-            placeholder="Nhập thông tin chi tiết kèo, địa chỉ hoặc lời mời gọi..."
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            rows={3}
-            className="p-3 font-semibold text-base rounded-md border-3 border-[#1e1e24] bg-white outline-none shadow-[3px_3px_0_#1e1e24] resize-y"
-            required
-          ></textarea>
-        </div>
-
-        <div className="form-group flex flex-col gap-2">
-          <label htmlFor="broadcastUrl" className="font-bold text-[0.95rem] text-[#1e1e24]">Đường dẫn điều hướng (Deep Link):</label>
-          <input
-            type="text"
-            id="broadcastUrl"
-            placeholder="Ví dụ: / hoặc /#/chats hoặc link chi tiết kèo..."
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="p-3 font-semibold text-base rounded-md border-3 border-[#1e1e24] bg-white outline-none shadow-[3px_3px_0_#1e1e24]"
-          />
-        </div>
-
-        <button
-          type="submit"
-          className={`btn broadcast-btn self-start py-3 px-6 text-[0.95rem] font-extrabold border-3 border-[#1e1e24] rounded-lg bg-pastelYellow text-[#1e1e24] shadow-neo cursor-pointer inline-flex items-center gap-2 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none ${
-            isSending ? "btn-loading" : ""
-          }`}
-          disabled={isSending}
-        >
-          <Icon name="rocket" size={18} className="inline" />
-          <span>{isSending ? "Đang phát..." : "Phát thông báo ngay"}</span>
-        </button>
-      </form>
-    </div>
   );
 }
 
