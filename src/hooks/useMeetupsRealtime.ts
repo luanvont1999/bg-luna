@@ -1,81 +1,8 @@
 import { useState, useEffect } from "react";
-import { collection, onSnapshot, doc, setDoc, query, where } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db, auth } from "../libs/firebase";
 import { calculateDistance, getMeetupCity } from "../utils/geo";
 import { onAuthStateChanged } from "firebase/auth";
-
-const SEED_MEETUPS = [
-  {
-    id: "1",
-    title: "Hội Ma Sói Đêm Trăng Q1",
-    game: "Ultimate Werewolf",
-    hostName: "Minh Tuấn",
-    hostUid: "default-host-1",
-    lat: 10.7769,
-    lng: 106.7009,
-    playersCount: 11,
-    playersNeeded: 15,
-    time: "2026-07-10T19:30",
-    color: "#bca0f5",
-    city: "HCM" as const,
-  },
-  {
-    id: "2",
-    title: "Sân Chơi Mèo Nổ Q3",
-    game: "Exploding Kittens",
-    hostName: "Thanh Trúc",
-    hostUid: "default-host-2",
-    lat: 10.7828,
-    lng: 106.6896,
-    playersCount: 4,
-    playersNeeded: 5,
-    time: "2026-07-11T15:00",
-    color: "#ffa4b2",
-    city: "HCM" as const,
-  },
-  {
-    id: "3",
-    title: "CLB Cờ Tỷ Phú Bình Thạnh",
-    game: "Monopoly Deal",
-    hostName: "Khánh Huy",
-    hostUid: "default-host-3",
-    lat: 10.7981,
-    lng: 106.7051,
-    playersCount: 3,
-    playersNeeded: 6,
-    time: "2026-07-12T18:00",
-    color: "#ffe869",
-    city: "HCM" as const,
-  },
-  {
-    id: "4",
-    title: "Chiến Thần Catan Hoàn Kiếm",
-    game: "Settlers of Catan",
-    hostName: "Hoàng Lâm",
-    hostUid: "default-host-4",
-    lat: 21.0285,
-    lng: 105.8542,
-    playersCount: 2,
-    playersNeeded: 4,
-    time: "2026-07-11T19:00",
-    color: "#9ee3b2",
-    city: "HN" as const,
-  },
-  {
-    id: "5",
-    title: "Hội Avalon Tây Hồ",
-    game: "Avalon",
-    hostName: "Thu Giang",
-    hostUid: "default-host-5",
-    lat: 21.0588,
-    lng: 105.8285,
-    playersCount: 5,
-    playersNeeded: 10,
-    time: "2026-07-12T14:30",
-    color: "#a4f0fd",
-    city: "HN" as const,
-  },
-];
 
 export function useMeetupsRealtime(
   selectedCities?: ("HCM" | "HN" | "OTHER")[],
@@ -118,18 +45,7 @@ export function useMeetupsRealtime(
           }
 
           if (snapshot.empty) {
-            // Seed logic
-            if (auth.currentUser) {
-              for (const seed of SEED_MEETUPS) {
-                try {
-                  await setDoc(doc(db, "meetups", seed.id), seed);
-                } catch (e) {
-                  console.warn("[Firestore] Seed failed:", e);
-                }
-              }
-            } else {
-              setAllMeetups(SEED_MEETUPS);
-            }
+            setAllMeetups([]);
           } else {
             const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
             
@@ -153,14 +69,14 @@ export function useMeetupsRealtime(
           }
         } catch (e) {
           console.error("[Firestore] snapshot process error:", e);
-          setAllMeetups((prev) => (prev.length === 0 ? SEED_MEETUPS : prev));
+          setAllMeetups((prev) => (prev.length === 0 ? [] : prev));
         } finally {
           setHasLoadedInitialMeetups(true);
         }
       },
       (err) => {
         console.error("[Firestore] meetups subscription error:", err);
-        setAllMeetups((prev) => (prev.length === 0 ? SEED_MEETUPS : prev));
+        setAllMeetups((prev) => (prev.length === 0 ? [] : prev));
         setHasLoadedInitialMeetups(true);
       }
     );
