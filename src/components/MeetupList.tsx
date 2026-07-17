@@ -75,7 +75,7 @@ export default function MeetupList({
       {isLoading ? (
         <div className="skeleton-meetup-list flex flex-col gap-4">
           {[1, 2, 3].map((n) => (
-            <div className="cartoon-card meetup-card skeleton-card bg-white p-5 border-3 border-[#1e1e24] rounded-2xl shadow-neo flex flex-col gap-3.5" key={n}>
+            <div className="cartoon-card meetup-card skeleton-card bg-white p-4 border-3 border-[#1e1e24] rounded-2xl shadow-neo flex flex-col gap-3.5" key={n}>
               <div className="skeleton skeleton-line long h-5 bg-gray-200 rounded w-2/3"></div>
               <div className="skeleton skeleton-line medium h-4 bg-gray-200 rounded w-1/2"></div>
               <div className="flex gap-2">
@@ -203,7 +203,7 @@ function MeetupCard({
 
   return (
     <div
-      className="cartoon-card meetup-card bg-white p-5 border-3 border-[#1e1e24] rounded-2xl shadow-neo flex flex-col gap-3.5 text-left transition-all duration-100 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[6px_6px_0px_#1e1e24]"
+      className="cartoon-card meetup-card bg-white p-4 border-3 border-[#1e1e24] rounded-2xl shadow-neo flex flex-col gap-3.5 text-left transition-all duration-100 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[6px_6px_0px_#1e1e24]"
       style={{ borderLeft: `8px solid ${meetup.color || "#bca0f5"}` }}
     >
       <div className="card-top-header flex justify-between items-start gap-3 w-full">
