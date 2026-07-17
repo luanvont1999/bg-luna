@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Luật cho các kèo chơi (meetups)
+    match /meetups/{meetupId} {
+      // Cho phép đọc (cả get single document và list/query collection) công khai không cần đăng nhập
+      allow read: if true;
+      // Chỉ cho phép ghi (tạo, cập nhật, xoá) khi đã đăng nhập
+      allow write: if request.auth != null;
+      
+      match /requests/{requestId} {
+        allow read, write: if request.auth != null;
+      }
+      match /messages/{messageId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+    
+    // Cấp quyền cho bộ sưu tập users:
+    match /users/{userId} {
+      allow read, write: if request.auth != null;
+    }
+    
+  }
+}
