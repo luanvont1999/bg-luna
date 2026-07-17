@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { collection, onSnapshot, doc, setDoc, query, where } from "firebase/firestore";
 import { db, auth } from "../libs/firebase";
 import { calculateDistance, getMeetupCity } from "../utils/geo";
+import { onAuthStateChanged } from "firebase/auth";
 
 const SEED_MEETUPS = [
   {
@@ -84,6 +85,14 @@ export function useMeetupsRealtime(
 ) {
   const [allMeetups, setAllMeetups] = useState<any[]>([]);
   const [hasLoadedInitialMeetups, setHasLoadedInitialMeetups] = useState<boolean>(false);
+  const [authUid, setAuthUid] = useState<string | null>(auth.currentUser?.uid || null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setAuthUid(user?.uid || null);
+    });
+    return unsubscribe;
+  }, []);
 
   const citiesKey = selectedCities ? JSON.stringify(selectedCities) : "";
 
@@ -157,7 +166,7 @@ export function useMeetupsRealtime(
     );
 
     return unsubscribe;
-  }, [citiesKey, selectedDistance, userLat, userLng]);
+  }, [citiesKey, selectedDistance, userLat, userLng, authUid]);
 
   return { allMeetups, isLoading: !hasLoadedInitialMeetups };
 }

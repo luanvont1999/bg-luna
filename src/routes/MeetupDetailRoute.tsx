@@ -34,9 +34,10 @@ interface Meetup {
 interface Props {
   meetup: Meetup | null;
   currentUser: User | null;
+  isLoading?: boolean;
 }
 
-export default function MeetupDetailRoute({ meetup, currentUser }: Props) {
+export default function MeetupDetailRoute({ meetup, currentUser, isLoading = false }: Props) {
   const [requests, setRequests] = useState<MeetupRequest[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
@@ -177,7 +178,57 @@ export default function MeetupDetailRoute({ meetup, currentUser }: Props) {
 
   return (
     <div className="fullscreen-route-view meetup-detail-route w-full flex flex-col gap-5 pb-10">
-      {!meetup ? (
+      {isLoading ? (
+        <>
+          {/* Skeleton Top Navigation */}
+          <div className="cartoon-card route-top-nav bg-pastelYellow/70 flex items-center gap-4 p-[16px_24px] rounded-lg shadow-neo text-left animate-pulse">
+            <button
+              type="button"
+              className="btn btn-secondary back-btn py-2 px-4 text-[0.95rem] whitespace-nowrap cursor-not-allowed opacity-50"
+              disabled
+            >
+              ← Quay lại
+            </button>
+            <div className="nav-title-group flex justify-end flex-1">
+              <div className="w-32 h-6 bg-[#1e1e24]/10 rounded-md"></div>
+            </div>
+          </div>
+
+          {/* Skeleton Body Card */}
+          <div className="cartoon-card manage-body-card bg-[#fffefb] p-[28px_24px] text-left flex flex-col gap-6 border-3 border-[#1e1e24] rounded-2xl shadow-neo">
+            {/* Title / Summary Bar */}
+            <div className="summary-bar flex flex-col bg-pastelCyan/50 p-[12px_20px] border-3 border-[#1e1e24] rounded-md shadow-neo gap-2.5 animate-pulse">
+              <div className="h-5 bg-[#1e1e24]/10 rounded w-1/2"></div>
+            </div>
+
+            {/* Action Section */}
+            <div className="user-action-block border-3 border-dashed border-[#1e1e24] p-5 rounded-lg bg-[#fbf7ed] flex flex-col gap-3 animate-pulse">
+              <div className="h-4 bg-[#1e1e24]/10 rounded w-1/3"></div>
+              <div className="h-10 bg-[#1e1e24]/10 rounded w-48 mt-1"></div>
+            </div>
+
+            {/* Meetup Information Details */}
+            <div className="meetup-info-details flex flex-col gap-4 border-3 border-[#1e1e24] p-5 rounded-lg bg-white shadow-neo animate-pulse">
+              <div className="h-4 bg-[#1e1e24]/10 rounded w-3/4"></div>
+              <div className="h-4 bg-[#1e1e24]/10 rounded w-2/3"></div>
+              <div className="h-4 bg-[#1e1e24]/10 rounded w-1/2"></div>
+            </div>
+            
+            {/* Members Section */}
+            <div className="members-block flex flex-col gap-3 mt-2 animate-pulse">
+              <div className="h-5 bg-[#1e1e24]/10 rounded w-1/4"></div>
+              <div className="members-grid grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                {[1, 2].map((n) => (
+                  <div className="member-item-card flex items-center gap-3 p-3.5 bg-white border-3 border-[#1e1e24] rounded-md shadow-neo" key={n}>
+                    <div className="w-8 h-8 bg-[#1e1e24]/10 rounded-full shrink-0"></div>
+                    <div className="h-4 bg-[#1e1e24]/10 rounded w-24"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      ) : !meetup ? (
         <div className="cartoon-card no-meetup-card m-auto text-center p-10 bg-white border-3 border-[#1e1e24] shadow-neo rounded-2xl">
           <h3 className="text-xl font-bold mb-4">
             Chưa chọn kèo chơi để xem chi tiết!

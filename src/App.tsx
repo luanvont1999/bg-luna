@@ -301,7 +301,13 @@ export default function App() {
       case "chat":
         return <ChatRoute meetup={allMeetups.find((m) => m.id === route.meetupId)} />;
       case "meetup-detail":
-        return <MeetupDetailRoute meetup={allMeetups.find((m) => m.id === route.meetupId)} currentUser={currentUser} />;
+        return (
+          <MeetupDetailRoute
+            meetup={allMeetups.find((m) => m.id === route.meetupId) || null}
+            currentUser={currentUser}
+            isLoading={isMeetupsLoading}
+          />
+        );
       default:
         return (
           <FindRoute
