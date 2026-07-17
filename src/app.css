@@ -1098,3 +1098,27 @@ a {
   }
 }
 
+/* Mapbox Neo-brutalist Popups styling */
+.mapboxgl-popup-content {
+  background-color: var(--bg-primary) !important;
+  border: var(--border-width) solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 4px 4px 0px var(--color-border) !important;
+  padding: 0 !important;
+  font-family: var(--font-family) !important;
+  color: var(--text-dark) !important;
+  overflow: hidden;
+}
+
+.mapboxgl-popup-tip {
+  display: none !important;
+}
+
+.preset-venue-popup .mapboxgl-popup-content {
+  background-color: var(--pastel-cyan) !important;
+}
+
+.preset-venue-popup.selected-venue-popup .mapboxgl-popup-content {
+  background-color: var(--pastel-yellow) !important;
+}
+

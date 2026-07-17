@@ -139,11 +139,15 @@ export default function MapRoute({
     }
   }, [mode, selectedLat, selectedLng, addressText]);
 
-  function handleMapClick(lng: number, lat: number) {
+  function handleMapClick(lat: number, lng: number, name?: string, address?: string) {
     setTempLat(lat);
     setTempLng(lng);
     if (mode === "select") {
-      reverseGeocode(lat, lng);
+      if (name && address) {
+        setTempAddress(`${name} (${address})`);
+      } else {
+        reverseGeocode(lat, lng);
+      }
     }
   }
 
@@ -259,7 +263,7 @@ export default function MapRoute({
         selectedLat={tempLat}
         selectedLng={tempLng}
         mode={mode}
-        onLocationSelect={handleMapClick}
+        onSelectCoordinates={handleMapClick}
       />
 
       {/* Bottom Control Bar */}
