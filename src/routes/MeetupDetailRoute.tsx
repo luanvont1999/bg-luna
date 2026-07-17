@@ -226,7 +226,7 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
       {isLoading ? (
         <>
           {/* Skeleton Top Navigation */}
-          <div className="cartoon-card route-top-nav bg-pastelYellow/70 flex items-center gap-4 p-[16px_24px] rounded-lg shadow-neo text-left animate-pulse">
+          <div className="cartoon-card route-top-nav bg-pastelYellow/70 flex items-center gap-3 p-3.5 md:p-[10px_16px] rounded-lg shadow-neo text-left animate-pulse">
             <button
               type="button"
               className="btn btn-secondary back-btn py-2 px-4 text-[0.95rem] whitespace-nowrap cursor-not-allowed opacity-50"
@@ -240,9 +240,9 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
           </div>
 
           {/* Skeleton Body Card */}
-          <div className="cartoon-card manage-body-card bg-[#fffefb] p-[28px_24px] text-left flex flex-col gap-6 border-3 border-[#1e1e24] rounded-2xl shadow-neo">
+          <div className="cartoon-card manage-body-card bg-[#fffefb] p-4 md:p-[20px_18px] text-left flex flex-col gap-6 border-3 border-[#1e1e24] rounded-2xl shadow-neo">
             {/* Title / Summary Bar */}
-            <div className="summary-bar flex flex-col bg-pastelCyan/50 p-[12px_20px] border-3 border-[#1e1e24] rounded-md shadow-neo gap-2.5 animate-pulse">
+            <div className="summary-bar flex flex-col bg-pastelCyan/50 p-[8px_14px] border-3 border-[#1e1e24] rounded-md shadow-neo gap-2.5 animate-pulse">
               <div className="h-5 bg-[#1e1e24]/10 rounded w-1/2"></div>
             </div>
 
@@ -274,7 +274,7 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
           </div>
         </>
       ) : !meetup ? (
-        <div className="cartoon-card no-meetup-card m-auto text-center p-10 bg-white border-3 border-[#1e1e24] shadow-neo rounded-2xl">
+        <div className="cartoon-card no-meetup-card m-auto text-center p-6 bg-white border-3 border-[#1e1e24] shadow-neo rounded-2xl">
           <h3 className="text-xl font-bold mb-4">
             Chưa chọn kèo chơi để xem chi tiết!
           </h3>
@@ -285,7 +285,7 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
       ) : (
         <>
           {/* Top Navigation */}
-          <div className="cartoon-card route-top-nav bg-pastelYellow flex items-center gap-4 p-[16px_24px] rounded-lg shadow-neo text-left">
+          <div className="cartoon-card route-top-nav bg-pastelYellow flex items-center gap-3 p-3.5 md:p-[10px_16px] rounded-lg shadow-neo text-left">
             <button
               type="button"
               className="btn btn-secondary back-btn py-2 px-4 text-[0.95rem] whitespace-nowrap"
@@ -301,8 +301,8 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
           </div>
 
           {/* Body Card */}
-          <div className="cartoon-card manage-body-card bg-[#fffefb] p-[28px_24px] text-left flex flex-col gap-5 border-3 border-[#1e1e24] rounded-2xl shadow-neo animate-[bubble-pop_0.15s_ease-out]">
-            <div className="summary-bar flex flex-col justify-between bg-pastelCyan p-[12px_20px] border-3 border-[#1e1e24] rounded-md shadow-neo text-[0.95rem] flex-wrap gap-3">
+          <div className="cartoon-card manage-body-card bg-[#fffefb] p-4 md:p-[20px_18px] text-left flex flex-col gap-5 border-3 border-[#1e1e24] rounded-2xl shadow-neo animate-[bubble-pop_0.15s_ease-out]">
+            <div className="summary-bar flex flex-col justify-between bg-pastelCyan p-[8px_14px] border-3 border-[#1e1e24] rounded-md shadow-neo text-[0.95rem] flex-wrap gap-3">
               <p className="meetup-name-badge inline-flex items-center gap-1.5">
                 <Icon name="dice" size={16} className="inline" /> Game:{" "}
                 <strong>{meetup.game}</strong>
@@ -448,7 +448,7 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
                 </h3>
 
                 {pendingRequests.length === 0 ? (
-                  <div className="empty-list-box p-[16px_20px] bg-bgCream border-3 border-dashed border-[#1e1e24] rounded-md text-sm font-semibold text-[#666666]">
+                  <div className="empty-list-box p-4 bg-bgCream border-3 border-dashed border-[#1e1e24] rounded-md text-sm font-semibold text-[#666666]">
                     <span>
                       Chưa có yêu cầu tham gia mới nào đang chờ duyệt.
                     </span>
@@ -457,7 +457,7 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
                   <div className="members-grid grid grid-cols-1 md:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
                     {pendingRequests.map((req) => (
                       <div
-                        className="member-item-card pending-item flex flex-col justify-between p-[14px_16px] bg-white border-3 border-[#1e1e24] rounded-md shadow-neo gap-3"
+                        className="member-item-card pending-item flex flex-col justify-between p-[10px_12px] bg-white border-3 border-[#1e1e24] rounded-md shadow-neo gap-3"
                         key={req.uid}
                       >
                         <div className="user-profile-row flex items-center gap-2.5">
@@ -471,7 +471,7 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
 
                         <div className="item-actions flex gap-2">
                           <button
-                            className="btn btn-success action-sm-btn flex items-center gap-1 p-[8px_14px] text-[0.85rem] rounded-md"
+                            className="btn btn-success action-sm-btn flex items-center gap-1 p-[6px_12px] text-[0.85rem] rounded-md"
                             onClick={() => handleApprove(req.uid)}
                             disabled={isProcessing}
                           >
@@ -479,7 +479,7 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
                             Duyệt vào kèo
                           </button>
                           <button
-                            className="btn btn-secondary action-sm-btn flex items-center gap-1 p-[8px_14px] text-[0.85rem] rounded-md"
+                            className="btn btn-secondary action-sm-btn flex items-center gap-1 p-[6px_12px] text-[0.85rem] rounded-md"
                             onClick={() => handleReject(req.uid)}
                             disabled={isProcessing}
                           >
@@ -504,7 +504,7 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
 
               <div className="members-grid grid grid-cols-1 md:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
                 {/* 1. Host Card */}
-                <div className="member-item-card host-card flex justify-between items-center p-[14px_16px] bg-white border-3 border-[#1e1e24] rounded-md shadow-neo gap-3">
+                <div className="member-item-card host-card flex justify-between items-center p-[10px_12px] bg-white border-3 border-[#1e1e24] rounded-md shadow-neo gap-3">
                   <div className="user-profile-row flex items-center gap-2.5">
                     <span className="user-icon flex items-center justify-center">
                       <Icon name="user" size={18} />
@@ -521,7 +521,7 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
                 {/* 2. Confirmed Members */}
                 {confirmedRequests.map((req) => (
                   <div
-                    className="member-item-card approved-item flex justify-between items-center p-[14px_16px] bg-white border-3 border-[#1e1e24] rounded-md shadow-neo gap-3"
+                    className="member-item-card approved-item flex justify-between items-center p-[10px_12px] bg-white border-3 border-[#1e1e24] rounded-md shadow-neo gap-3"
                     key={req.uid}
                   >
                     <div className="user-profile-row flex items-center gap-2.5">
@@ -535,7 +535,7 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
 
                     {isHost && (
                       <button
-                        className="btn btn-secondary action-sm-btn kick-btn bg-pastelPink flex items-center gap-1 p-[8px_14px] text-[0.85rem] rounded-md"
+                        className="btn btn-secondary action-sm-btn kick-btn bg-pastelPink flex items-center gap-1 p-[6px_12px] text-[0.85rem] rounded-md"
                         onClick={() => handleKick(req.uid)}
                         disabled={isProcessing}
                       >
@@ -564,7 +564,7 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
                 <div className="members-grid grid grid-cols-1 md:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
                   {approvedPendingRequests.map((req) => (
                     <div
-                      className="member-item-card pending-confirm-item flex justify-between items-center p-[14px_16px] bg-[#fffbeb] border-3 border-[#1e1e24] rounded-md shadow-neo gap-3"
+                      className="member-item-card pending-confirm-item flex justify-between items-center p-[10px_12px] bg-[#fffbeb] border-3 border-[#1e1e24] rounded-md shadow-neo gap-3"
                       key={req.uid}
                     >
                       <div className="user-profile-row flex items-center gap-2.5">
