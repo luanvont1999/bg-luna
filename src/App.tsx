@@ -352,7 +352,7 @@ export default function App() {
       />
 
       {/* Main Content View */}
-      <main className="container">{renderRoute()}</main>
+      <main className={`route-container ${!childRoute ? "has-bottom-bar" : ""}`}>{renderRoute()}</main>
 
       {/* Toast Notification Box */}
       <ToastContainer
