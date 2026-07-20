@@ -195,10 +195,15 @@ export default function ManageMembersModal({ meetup, isOpen, onClose }: Props) {
                       className="member-item p-3 border-2 border-[#1e1e24] rounded-lg flex items-center justify-between gap-3 text-left shadow-[2px_2px_0px_#1e1e24] bg-[#fffdfa]"
                       key={member.uid}
                     >
-                      <div className="member-name-badge flex items-center gap-2 flex-1 min-w-0">
+                      <div className="member-name-badge flex items-center gap-2 flex-1 min-w-0 flex-wrap">
                         <span className="member-name font-bold text-sm text-[#1e1e24] truncate">
                           {member.name}
                         </span>
+                        {member.participantCount && member.participantCount > 1 && (
+                          <span className="text-[0.7rem] font-bold bg-[#e0e7ff] text-[#3730a3] border border-[#3730a3] px-1.5 py-0.5 rounded-full shrink-0">
+                            👥 {member.participantCount} người
+                          </span>
+                        )}
                         {isUserHost && (
                           <span className="host-badge text-[0.7rem] font-extrabold bg-pastelYellow border-[1.5px] border-[#1e1e24] p-[1px_6px] rounded-full shrink-0 flex items-center gap-0.5">
                             <Icon name="crown" size={10} /> Host

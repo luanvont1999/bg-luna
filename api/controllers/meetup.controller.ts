@@ -125,7 +125,8 @@ export async function approveMember(req: Request, res: Response) {
 
     // 2. Transfer from pendingUids to approvedPendingUids
     const meetup = await getFirestoreMeetup(meetupId);
-    meetup.pendingUids = meetup.pendingUids.filter((uid) => uid !== playerUid);
+    meetup.pendingUids = (meetup.pendingUids || []).filter((uid) => uid !== playerUid);
+    if (!meetup.approvedPendingUids) meetup.approvedPendingUids = [];
     if (!meetup.approvedPendingUids.includes(playerUid)) {
       meetup.approvedPendingUids.push(playerUid);
     }
@@ -234,10 +235,10 @@ export async function leaveOrKickMember(req: Request, res: Response) {
     // 3. Load meetup and filter arrays
     const meetup = await getFirestoreMeetup(meetupId);
 
-    const wasApproved = meetup.approvedUids.includes(playerUid);
-    meetup.approvedUids = meetup.approvedUids.filter((uid) => uid !== playerUid);
-    meetup.pendingUids = meetup.pendingUids.filter((uid) => uid !== playerUid);
-    meetup.approvedPendingUids = meetup.approvedPendingUids.filter((uid) => uid !== playerUid);
+    const wasApproved = (meetup.approvedUids || []).includes(playerUid);
+    meetup.approvedUids = (meetup.approvedUids || []).filter((uid) => uid !== playerUid);
+    meetup.pendingUids = (meetup.pendingUids || []).filter((uid) => uid !== playerUid);
+    meetup.approvedPendingUids = (meetup.approvedPendingUids || []).filter((uid) => uid !== playerUid);
 
     if (wasApproved) {
       meetup.playersCount = Math.max(1, meetup.playersCount - removedSlots);
