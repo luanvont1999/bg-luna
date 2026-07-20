@@ -5,6 +5,7 @@ import {
   getFirestoreMeetup,
   updateFirestoreMeetup,
   setFirestoreRequest,
+  getFirestoreRequest,
   updateFirestoreRequestStatus,
   deleteFirestoreRequest,
   Meetup,
