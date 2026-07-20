@@ -28,7 +28,7 @@ export async function createMeetup(req: Request, res: Response) {
   const user = (req as any).firebase_user as FirebaseUser;
   const body = req.body;
 
-  const { title, game, lat, lng, time } = body;
+  const { title, game, lat, lng, time, playersCount, playersNeeded } = body;
   if (!title || !game || !lat || !lng || !time) {
     res.status(400).json({ error: "Missing required fields (title, game, lat, lng, time)" });
     return;
@@ -46,8 +46,8 @@ export async function createMeetup(req: Request, res: Response) {
     host_uid: user.uid,
     lat: parseFloat(lat),
     lng: parseFloat(lng),
-    players_count: 1,
-    players_needed: 4,
+    players_count: parseInt(playersCount) || 1,
+    players_needed: parseInt(playersNeeded) || 4,
     time,
     color,
   };
@@ -62,15 +62,18 @@ export async function createMeetup(req: Request, res: Response) {
 export async function joinMeetup(req: Request, res: Response) {
   const body = req.body;
 
-  const { meetupId, userUid, userName } = body;
+  const { meetupId, userUid, userName, participantCount, message } = body;
   if (!meetupId || !userUid || !userName) {
     res.status(400).json({ error: "Missing required fields" });
     return;
   }
 
+  const pCount = Math.max(1, parseInt(participantCount) || 1);
+  const msg = typeof message === "string" ? message.trim() : "";
+
   try {
     // 1. Create pending request record in Firestore
-    await setFirestoreRequest(meetupId, userUid, userName, "pending");
+    await setFirestoreRequest(meetupId, userUid, userName, "pending", pCount, msg);
 
     // 2. Add to meetup's pendingUids
     const meetup = await getFirestoreMeetup(meetupId);
@@ -84,7 +87,9 @@ export async function joinMeetup(req: Request, res: Response) {
     if (meetup.hostUID) {
       const hostToken = await getUserFCMToken(meetup.hostUID);
       if (hostToken) {
-        const bodyText = `${userName} muốn xin vào kèo "${meetup.title}" chơi game ${meetup.game} của bạn.`;
+        const countStr = pCount > 1 ? ` (${pCount} người)` : "";
+        const msgStr = msg ? ` - Lời nhắn: "${msg}"` : "";
+        const bodyText = `${userName}${countStr} muốn xin vào kèo "${meetup.title}" chơi game ${meetup.game} của bạn.${msgStr}`;
         sendFCMNotification(
           hostToken,
           "🎯 Yêu cầu tham gia kèo mới!",
@@ -159,14 +164,16 @@ export async function confirmParticipation(req: Request, res: Response) {
   }
 
   try {
-    // 1. Fetch meetup
+    // 1. Fetch meetup and user's request details
     const meetup = await getFirestoreMeetup(meetupId);
+    const reqData = await getFirestoreRequest(meetupId, userUid);
+    const addedSlots = reqData?.participantCount || 1;
 
-    // 2. Transition from approvedPendingUids to approvedUids and increment player count
+    // 2. Transition from approvedPendingUids to approvedUids and increment player count by participantCount
     meetup.approvedPendingUids = meetup.approvedPendingUids.filter((uid) => uid !== userUid);
     if (!meetup.approvedUids.includes(userUid)) {
       meetup.approvedUids.push(userUid);
-      meetup.playersCount++;
+      meetup.playersCount += addedSlots;
     }
 
     await updateFirestoreMeetup(meetup, ["approvedUids", "approvedPendingUids", "playersCount"]);
@@ -180,7 +187,8 @@ export async function confirmParticipation(req: Request, res: Response) {
       targets.add(meetup.hostUID);
     }
 
-    const bodyText = `${userName} đã xác nhận tham gia kèo "${meetup.title}" chơi game ${meetup.game}.`;
+    const countStr = addedSlots > 1 ? ` (${addedSlots} người)` : "";
+    const bodyText = `${userName}${countStr} đã xác nhận tham gia kèo "${meetup.title}" chơi game ${meetup.game}.`;
     for (const uid of targets) {
       // Get token dynamically for each member
       getUserFCMToken(uid).then((token) => {
@@ -215,10 +223,14 @@ export async function leaveOrKickMember(req: Request, res: Response) {
   }
 
   try {
-    // 1. Delete request subcollection record
+    // 1. Get request data before deletion to know participantCount
+    const reqData = await getFirestoreRequest(meetupId, playerUid);
+    const removedSlots = reqData?.participantCount || 1;
+
+    // 2. Delete request subcollection record
     await deleteFirestoreRequest(meetupId, playerUid);
 
-    // 2. Load meetup and filter arrays
+    // 3. Load meetup and filter arrays
     const meetup = await getFirestoreMeetup(meetupId);
 
     const wasApproved = meetup.approvedUids.includes(playerUid);
@@ -226,8 +238,8 @@ export async function leaveOrKickMember(req: Request, res: Response) {
     meetup.pendingUids = meetup.pendingUids.filter((uid) => uid !== playerUid);
     meetup.approvedPendingUids = meetup.approvedPendingUids.filter((uid) => uid !== playerUid);
 
-    if (wasApproved && meetup.playersCount > 1) {
-      meetup.playersCount--;
+    if (wasApproved) {
+      meetup.playersCount = Math.max(1, meetup.playersCount - removedSlots);
     }
 
     await updateFirestoreMeetup(meetup, [

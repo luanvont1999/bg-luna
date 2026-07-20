@@ -22,6 +22,7 @@ import {
 import { notifyMeetupChatMembers } from "../api/notificationService";
 import { formatMessageTime } from "../utils/time";
 import { navigate } from "../libs/router";
+import JoinRequestModal from "./JoinRequestModal";
 
 interface Meetup {
   id: string;
@@ -55,6 +56,7 @@ export default function ChatView({ meetup, onBack }: Props) {
   const [newMessageText, setNewMessageText] = useState<string>("");
   const [isSending, setIsSending] = useState<boolean>(false);
   const [isRequesting, setIsRequesting] = useState<boolean>(false);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<User | null>(auth.currentUser);
 
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
@@ -165,13 +167,15 @@ export default function ChatView({ meetup, onBack }: Props) {
     }
   }
 
-  async function handleSendJoinRequest() {
+  async function handleSendJoinRequestSubmit(participantCount: number, message: string) {
     if (!meetup?.id || !currentUser || isRequesting) return;
     setIsRequesting(true);
     try {
-      await requestToJoin(meetup.id, currentUser);
-    } catch (err) {
+      await requestToJoin(meetup.id, currentUser, participantCount, message);
+    } catch (err: any) {
       console.error("Request join failed:", err);
+      alert(err.message || "Không thể gửi yêu cầu tham gia!");
+      throw err;
     } finally {
       setIsRequesting(false);
     }
@@ -314,15 +318,11 @@ export default function ChatView({ meetup, onBack }: Props) {
                 <div className="action-btn-group flex gap-3 w-full justify-center">
                   <button
                     className="btn btn-success flex-1"
-                    onClick={handleSendJoinRequest}
+                    onClick={() => setIsJoinModalOpen(true)}
                     disabled={isRequesting}
                   >
                     <Icon name="handshake" size={15} className="mr-1 inline" />
-                    <span>
-                      {isRequesting
-                        ? "Đang gửi..."
-                        : "Gửi yêu cầu tham gia kèo"}
-                    </span>
+                    <span>Gửi yêu cầu tham gia kèo</span>
                   </button>
                   <button className="btn btn-primary flex-1" onClick={onBack}>
                     Quay lại danh sách
@@ -454,6 +454,14 @@ export default function ChatView({ meetup, onBack }: Props) {
           </div>
         </>
       )}
+
+      <JoinRequestModal
+        meetup={meetup}
+        isOpen={isJoinModalOpen}
+        onClose={() => setIsJoinModalOpen(false)}
+        onSubmit={handleSendJoinRequestSubmit}
+        isProcessing={isRequesting}
+      />
     </div>
   );
 }

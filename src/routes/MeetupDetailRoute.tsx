@@ -17,6 +17,8 @@ import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "../libs/firebase";
 import { notifyMeetupCancellation } from "../api/notificationService";
 
+import JoinRequestModal from "../components/JoinRequestModal";
+
 interface Meetup {
   id: string;
   title: string;
@@ -42,6 +44,7 @@ interface Props {
 export default function MeetupDetailRoute({ meetup, currentUser, isLoading = false }: Props) {
   const [requests, setRequests] = useState<MeetupRequest[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState<boolean>(false);
 
   const hostUid = meetup?.hostUid || meetup?.host_uid;
   const isHost = currentUser && hostUid && currentUser.uid === hostUid;
@@ -87,13 +90,14 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
     : null;
   const isPending = myRequest?.status === "pending";
 
-  async function handleJoinRequest() {
+  async function handleJoinRequestSubmit(participantCount: number, message: string) {
     if (!meetup?.id || !currentUser || isProcessing) return;
     setIsProcessing(true);
     try {
-      await requestToJoin(meetup.id, currentUser);
+      await requestToJoin(meetup.id, currentUser, participantCount, message);
     } catch (e: any) {
       alert(e.message || "Không thể gửi yêu cầu tham gia!");
+      throw e;
     } finally {
       setIsProcessing(false);
     }
@@ -400,18 +404,23 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
                     </div>
                   </div>
                 ) : isPending ? (
-                  <div className="flex flex-col gap-3 w-full text-left">
+                  <div className="flex flex-col gap-2 w-full text-left bg-[#eff6ff] p-3.5 rounded-lg border-2 border-[#bfdbfe]">
                     <p className="text-sm font-extrabold text-[#2563eb] flex items-center gap-1.5 m-0">
-                      <Icon name="clock" size={16} className="inline" /> Yêu cầu
-                      tham gia của bạn đang chờ Host xét duyệt...
+                      <Icon name="clock" size={16} className="inline shrink-0" /> Yêu cầu
+                      tham gia ({myRequest?.participantCount || 1} người) của bạn đang chờ Host xét duyệt...
                     </p>
+                    {myRequest?.message && (
+                      <p className="text-xs font-medium italic text-[#374151] bg-white p-2 rounded border border-[#dbeafe] m-0">
+                        💬 Lời nhắn: "{myRequest.message}"
+                      </p>
+                    )}
                     <button
                       type="button"
-                      className="btn btn-secondary py-2.5 px-5 font-bold self-start"
+                      className="btn btn-secondary py-2 px-4 text-xs font-bold self-start mt-1"
                       onClick={handleCancelRequest}
                       disabled={isProcessing}
                     >
-                      <Icon name="x" size={15} className="inline" /> Hủy yêu cầu
+                      <Icon name="x" size={14} className="inline" /> Hủy yêu cầu
                       tham gia
                     </button>
                   </div>
@@ -423,16 +432,14 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
                         ? "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none border-gray-300"
                         : "btn-success bg-[#9ee3b2]"
                     }`}
-                    onClick={handleJoinRequest}
+                    onClick={() => setIsJoinModalOpen(true)}
                     disabled={isProcessing || isFull}
                   >
                     <Icon name="plus" size={15} className="inline" />
                     <span>
                       {isFull
                         ? "Kèo đã đầy sĩ số"
-                        : isProcessing
-                          ? "Đang gửi..."
-                          : "Gửi yêu cầu tham gia"}
+                        : "Gửi yêu cầu tham gia"}
                     </span>
                   </button>
                 )}
@@ -460,16 +467,28 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
                         className="member-item-card pending-item flex flex-col justify-between p-[14px_16px] bg-white border-3 border-[#1e1e24] rounded-md shadow-neo gap-3"
                         key={req.uid}
                       >
-                        <div className="user-profile-row flex items-center gap-2.5">
-                          <span className="user-icon flex items-center justify-center">
-                            <Icon name="user" size={18} />
-                          </span>
-                          <span 
-                            className="user-name text-[1rem] font-extrabold hover:underline cursor-pointer"
-                            onClick={() => navigate({ name: "user-profile", userId: req.uid })}
-                          >
-                            {req.name}
-                          </span>
+                        <div className="flex flex-col gap-1.5">
+                          <div className="user-profile-row flex items-center gap-2 flex-wrap">
+                            <span className="user-icon flex items-center justify-center">
+                              <Icon name="user" size={18} />
+                            </span>
+                            <span 
+                              className="user-name text-[1rem] font-extrabold hover:underline cursor-pointer"
+                              onClick={() => navigate({ name: "user-profile", userId: req.uid })}
+                            >
+                              {req.name}
+                            </span>
+                            {req.participantCount && req.participantCount > 1 && (
+                              <span className="text-xs font-bold bg-[#e0e7ff] text-[#3730a3] border border-[#3730a3] px-2 py-0.5 rounded-full">
+                                👥 {req.participantCount} người
+                              </span>
+                            )}
+                          </div>
+                          {req.message && (
+                            <p className="text-xs font-semibold italic text-[#4b5563] bg-[#f9fafb] p-2 rounded-md border border-[#e5e7eb] m-0 text-left">
+                              💬 "{req.message}"
+                            </p>
+                          )}
                         </div>
 
                         <div className="item-actions flex gap-2">
@@ -599,6 +618,14 @@ export default function MeetupDetailRoute({ meetup, currentUser, isLoading = fal
           </div>
         </>
       )}
+
+      <JoinRequestModal
+        meetup={meetup}
+        isOpen={isJoinModalOpen}
+        onClose={() => setIsJoinModalOpen(false)}
+        onSubmit={handleJoinRequestSubmit}
+        isProcessing={isProcessing}
+      />
     </div>
   );
 }

@@ -10,6 +10,8 @@ export interface MeetupRequest {
   name: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt?: any;
+  participantCount?: number;
+  message?: string;
 }
 
 const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_URL || '') : '';
@@ -39,7 +41,12 @@ export function isHost(meetup: any, userUid: string | null | undefined): boolean
 /**
  * Player sends a join request to a meetup (called via Go Backend)
  */
-export async function requestToJoin(meetupId: string, user: User) {
+export async function requestToJoin(
+  meetupId: string, 
+  user: User, 
+  participantCount: number = 1, 
+  message: string = ''
+) {
   const name = user.displayName || user.email || 'Thành viên';
 
   const res = await fetch(`${API_BASE}/api/meetups/join`, {
@@ -50,7 +57,9 @@ export async function requestToJoin(meetupId: string, user: User) {
     body: JSON.stringify({
       meetupId,
       userUid: user.uid,
-      userName: name
+      userName: name,
+      participantCount,
+      message
     })
   });
 

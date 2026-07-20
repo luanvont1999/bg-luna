@@ -304,11 +304,38 @@ export async function updateFirestoreMeetup(m: MeetupData, updateFields: string[
   }
 }
 
+export async function getFirestoreRequest(
+  meetupId: string,
+  userUid: string
+): Promise<{ uid: string; name: string; status: string; participantCount: number; message: string } | null> {
+  const { accessToken, projectId } = await getAccessToken();
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/meetups/${meetupId}/requests/${userUid}`;
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) return null;
+    const doc = await res.json();
+    const fields = doc.fields || {};
+    return {
+      uid: fields.uid?.stringValue || userUid,
+      name: fields.name?.stringValue || "",
+      status: fields.status?.stringValue || "",
+      participantCount: parseInt(fields.participantCount?.integerValue || "1"),
+      message: fields.message?.stringValue || "",
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
 export async function setFirestoreRequest(
   meetupId: string,
   userUid: string,
   userName: string,
-  status: string
+  status: string,
+  participantCount: number = 1,
+  message: string = ""
 ): Promise<void> {
   const { accessToken, projectId } = await getAccessToken();
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/meetups/${meetupId}/requests/${userUid}`;
@@ -318,6 +345,8 @@ export async function setFirestoreRequest(
       uid: { stringValue: userUid },
       name: { stringValue: userName },
       status: { stringValue: status },
+      participantCount: { integerValue: participantCount.toString() },
+      message: { stringValue: message },
     },
   };
 

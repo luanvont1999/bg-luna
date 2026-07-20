@@ -132,30 +132,44 @@ export default function ManageMembersModal({ meetup, isOpen, onClose }: Props) {
               <div className="requests-list flex flex-col gap-2.5">
                 {pendingRequests.map((req) => (
                   <div
-                    className="member-item p-3 border-2 border-[#1e1e24] rounded-lg flex items-center justify-between gap-3 text-left shadow-[2px_2px_0px_#1e1e24] bg-[#fffdfa]"
+                    className="member-item p-3 border-2 border-[#1e1e24] rounded-lg flex flex-col gap-2 text-left shadow-[2px_2px_0px_#1e1e24] bg-[#fffdfa]"
                     key={req.uid}
                   >
-                    <span className="member-name font-bold text-sm text-[#1e1e24] truncate flex-1">
-                      {req.name}
-                    </span>
-                    <div className="member-item-actions flex gap-2 shrink-0">
-                      <button
-                        type="button"
-                        className="btn btn-success action-pill-btn p-[5px_12px] text-[0.75rem] border-2 shadow-[1.5px_1.5px_0_#1e1e24]"
-                        onClick={() => handleApprove(req.uid)}
-                        disabled={isProcessing}
-                      >
-                        Duyệt
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-secondary action-pill-btn p-[5px_12px] text-[0.75rem] border-2 shadow-[1.5px_1.5px_0_#1e1e24]"
-                        onClick={() => handleReject(req.uid)}
-                        disabled={isProcessing}
-                      >
-                        Từ chối
-                      </button>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="member-name font-bold text-sm text-[#1e1e24] truncate">
+                          {req.name}
+                        </span>
+                        {req.participantCount && req.participantCount > 1 && (
+                          <span className="text-[0.7rem] font-bold bg-[#e0e7ff] text-[#3730a3] border border-[#3730a3] px-1.5 py-0.5 rounded-full shrink-0">
+                            👥 {req.participantCount} người
+                          </span>
+                        )}
+                      </div>
+                      <div className="member-item-actions flex gap-2 shrink-0">
+                        <button
+                          type="button"
+                          className="btn btn-success action-pill-btn p-[5px_12px] text-[0.75rem] border-2 shadow-[1.5px_1.5px_0_#1e1e24]"
+                          onClick={() => handleApprove(req.uid)}
+                          disabled={isProcessing}
+                        >
+                          Duyệt
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary action-pill-btn p-[5px_12px] text-[0.75rem] border-2 shadow-[1.5px_1.5px_0_#1e1e24]"
+                          onClick={() => handleReject(req.uid)}
+                          disabled={isProcessing}
+                        >
+                          Từ chối
+                        </button>
+                      </div>
                     </div>
+                    {req.message && (
+                      <p className="text-xs italic text-[#4b5563] bg-[#f9fafb] p-2 rounded border border-[#e5e7eb] m-0">
+                        💬 "{req.message}"
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

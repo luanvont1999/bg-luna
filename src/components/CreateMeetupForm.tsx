@@ -38,6 +38,9 @@ export default function CreateMeetupForm({
   const [lng, setLng] = useState<number | null>(null);
 
   // New detailed fields
+  const [existingPlayers, setExistingPlayers] = useState<number>(
+    Number(localStorage.getItem("draft_meetup_existingPlayers")) || 1
+  );
   const [playersNeeded, setPlayersNeeded] = useState<number>(
     Number(localStorage.getItem("draft_meetup_playersNeeded")) || 4
   );
@@ -61,15 +64,17 @@ export default function CreateMeetupForm({
     localStorage.setItem("draft_meetup_title", title);
     localStorage.setItem("draft_meetup_game", game);
     localStorage.setItem("draft_meetup_time", time);
+    localStorage.setItem("draft_meetup_existingPlayers", String(existingPlayers));
     localStorage.setItem("draft_meetup_playersNeeded", String(playersNeeded));
     localStorage.setItem("draft_meetup_estimatedDuration", estimatedDuration);
     localStorage.setItem("draft_meetup_notes", notes);
-  }, [title, game, time, playersNeeded, estimatedDuration, notes]);
+  }, [title, game, time, existingPlayers, playersNeeded, estimatedDuration, notes]);
 
   function clearDraft() {
     localStorage.removeItem("draft_meetup_title");
     localStorage.removeItem("draft_meetup_game");
     localStorage.removeItem("draft_meetup_time");
+    localStorage.removeItem("draft_meetup_existingPlayers");
     localStorage.removeItem("draft_meetup_playersNeeded");
     localStorage.removeItem("draft_meetup_estimatedDuration");
     localStorage.removeItem("draft_meetup_notes");
@@ -242,7 +247,7 @@ export default function CreateMeetupForm({
         lat,
         lng,
         city: getMeetupCity({ lat, lng }),
-        playersCount: 1,
+        playersCount: Math.max(1, Number(existingPlayers) || 1),
         playersNeeded: Number(playersNeeded) || 4,
         approvedUids: [user.uid],
         time,
@@ -261,6 +266,7 @@ export default function CreateMeetupForm({
       setTitle("");
       setGame("");
       setTime("");
+      setExistingPlayers(1);
       setPlayersNeeded(4);
       setEstimatedDuration("2 - 3 tiếng");
       setNotes("");
@@ -347,25 +353,45 @@ export default function CreateMeetupForm({
               />
             </div>
 
-            <div className="short-inputs-row flex flex-row flex-nowrap gap-2 w-full">
-              <div className="form-group flex flex-col gap-[6px] flex-1 min-w-0">
-                <label htmlFor="players-needed" className="font-extrabold text-[0.95rem] text-[#1e1e24]">Số người:</label>
+            <div className="short-inputs-row flex flex-row flex-wrap sm:flex-nowrap gap-2 w-full">
+              <div className="form-group flex flex-col gap-[6px] flex-1 min-w-[110px]">
+                <label htmlFor="existing-players" className="font-extrabold text-[0.88rem] text-[#1e1e24]">Đã có sẵn:</label>
                 <input
                   type="number"
-                  id="players-needed"
-                  min="2"
+                  id="existing-players"
+                  min="1"
                   max="30"
-                  placeholder="4"
-                  value={playersNeeded}
-                  onChange={(e) => setPlayersNeeded(Number(e.target.value))}
+                  placeholder="1"
+                  value={existingPlayers}
+                  onChange={(e) => {
+                    const val = Math.max(1, Number(e.target.value));
+                    setExistingPlayers(val);
+                    if (val > playersNeeded) setPlayersNeeded(val);
+                  }}
                   disabled={isSubmitting}
                   className="p-[12px_14px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24]"
                   required
                 />
               </div>
 
-              <div className="form-group flex flex-col gap-[6px] flex-1 min-w-0">
-                <label htmlFor="meetup-duration" className="font-extrabold text-[0.95rem] text-[#1e1e24]">Thời gian:</label>
+              <div className="form-group flex flex-col gap-[6px] flex-1 min-w-[110px]">
+                <label htmlFor="players-needed" className="font-extrabold text-[0.88rem] text-[#1e1e24]">Cần tối đa:</label>
+                <input
+                  type="number"
+                  id="players-needed"
+                  min={Math.max(2, existingPlayers)}
+                  max="30"
+                  placeholder="4"
+                  value={playersNeeded}
+                  onChange={(e) => setPlayersNeeded(Math.max(existingPlayers, Number(e.target.value)))}
+                  disabled={isSubmitting}
+                  className="p-[12px_14px] rounded-md border-3 border-[#1e1e24] text-[0.95rem] font-semibold shadow-[2px_2px_0_#1e1e24] outline-none bg-white transition-all duration-100 focus:translate-x-[-1px] focus:translate-y-[-1px] focus:shadow-[3px_3px_0_#1e1e24]"
+                  required
+                />
+              </div>
+
+              <div className="form-group flex flex-col gap-[6px] flex-1 min-w-[130px]">
+                <label htmlFor="meetup-duration" className="font-extrabold text-[0.88rem] text-[#1e1e24]">Thời gian:</label>
                 <select
                   id="meetup-duration"
                   value={estimatedDuration}
