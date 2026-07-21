@@ -7,6 +7,7 @@ import {
   isChildRoute,
 } from "./libs/router";
 import { initNotifications } from "./api/notificationService";
+import { syncLoginOrRegisterApi } from "./api/authService";
 
 // Custom Hooks
 import useGPS from "./hooks/useGPS";
@@ -177,10 +178,10 @@ export default function App() {
 
   // Auth FCM Notification initialization & listener
   useEffect(() => {
-    const unsubAuth = onAuthStateChanged(auth, (user) => {
+    const unsubAuth = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
-        initNotifications(user.uid, (payload) => {
+        const token = await initNotifications(user.uid, (payload) => {
           const title = payload.notification?.title || payload.data?.title || "Thông báo mới";
           const body = payload.notification?.body || payload.data?.body || "";
           addToast(`${title}: ${body}`, "info");
@@ -198,7 +199,9 @@ export default function App() {
               notification.close();
             };
           }
-        });
+        }).catch(() => null);
+
+        await syncLoginOrRegisterApi(user, token, false);
       }
     });
 

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { FirebaseUser } from "../_middleware/auth.js";
+import { FirebaseUser } from "../middleware/auth.js";
 
 export async function getHealth(req: Request, res: Response) {
   res.json({

@@ -91,20 +91,33 @@ async function main() {
   const usersData = await usersRes.json();
   const docs = usersData.documents || [];
 
-  const targets: { name: string; token: string }[] = [];
+  interface TargetItem {
+    name: string;
+    token: string;
+    docPath: string;
+    userTokens: string[];
+  }
+
+  const targets: TargetItem[] = [];
+  const globalTokensSet = new Set<string>();
+
   for (const doc of docs) {
     const name = doc.fields?.displayName?.stringValue || doc.name.split("/").pop();
-    const userTokensSet = new Set<string>();
-
     const arrayVals = doc.fields?.fcmTokens?.arrayValue?.values || [];
-    for (const item of arrayVals) {
-      if (item.stringValue) userTokensSet.add(item.stringValue);
-    }
-    const singleToken = doc.fields?.fcmToken?.stringValue;
-    if (singleToken) userTokensSet.add(singleToken);
+    const docTokens: string[] = [];
 
-    for (const token of userTokensSet) {
-      targets.push({ name, token });
+    for (const item of arrayVals) {
+      if (item.stringValue) docTokens.push(item.stringValue);
+    }
+    if (doc.fields?.fcmToken?.stringValue) {
+      docTokens.push(doc.fields.fcmToken.stringValue);
+    }
+
+    for (const token of docTokens) {
+      if (token && !globalTokensSet.has(token)) {
+        globalTokensSet.add(token);
+        targets.push({ name, token, docPath: doc.name, userTokens: docTokens });
+      }
     }
   }
 
@@ -117,6 +130,8 @@ async function main() {
 
   // 3. Send FCM Notification concurrently
   const startTime = Date.now();
+  const deadTokensMap = new Map<string, string[]>(); // docPath -> deadTokens
+
   const results = await Promise.allSettled(
     targets.map(async (item, i) => {
       const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
@@ -162,11 +177,55 @@ async function main() {
       const resText = await res.text();
       const hint = item.token.slice(0, 12) + "...";
       if (!res.ok) {
+        if (res.status === 404 || resText.includes("UNREGISTERED") || resText.includes("NotRegistered")) {
+          const list = deadTokensMap.get(item.docPath) || [];
+          list.push(item.token);
+          deadTokensMap.set(item.docPath, list);
+        }
         throw new Error(`[${i + 1}/${targets.length}] ${item.name} (${hint}): ${res.status} - ${resText}`);
       }
       return `[${i + 1}/${targets.length}] ${item.name} (${hint})`;
     })
   );
+
+  // Auto-prune dead tokens from Firestore
+  if (deadTokensMap.size > 0) {
+    console.log("\n🧹 Tự động dọn dẹp các FCM Token không còn tồn tại (404/UNREGISTERED)...");
+    for (const [docPath, deadTokens] of deadTokensMap.entries()) {
+      try {
+        const docRes = await fetch(`https://firestore.googleapis.com/v1/${docPath}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (docRes.ok) {
+          const docData = await docRes.json();
+          const currentArray = (docData.fields?.fcmTokens?.arrayValue?.values || [])
+            .map((v: any) => v.stringValue)
+            .filter((t: string) => t && !deadTokens.includes(t));
+
+          const patchUrl = `https://firestore.googleapis.com/v1/${docPath}?updateMask.fieldPaths=fcmTokens`;
+          await fetch(patchUrl, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              fields: {
+                fcmTokens: {
+                  arrayValue: {
+                    values: currentArray.map((t: string) => ({ stringValue: t })),
+                  },
+                },
+              },
+            }),
+          });
+          console.log(`  🗑️ Đã xóa ${deadTokens.length} token hết hạn khỏi user document.`);
+        }
+      } catch (err: any) {
+        console.warn(`  Lỗi dọn dẹp token cho ${docPath}:`, err.message);
+      }
+    }
+  }
 
   const duration = Date.now() - startTime;
   let successCount = 0;

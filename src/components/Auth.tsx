@@ -68,20 +68,10 @@ export default function Auth() {
 
     try {
       if (isLoginMode) {
-        const cred = await signInWithEmailAndPassword(auth, email, password);
-        if (cred.user) {
-          const token = await initNotifications(cred.user.uid).catch(() => null);
-          await syncLoginOrRegisterApi(cred.user, token, false);
-          await userProfileState.fetchProfile(cred.user.uid, cred.user.displayName);
-        }
+        await signInWithEmailAndPassword(auth, email, password);
         setSuccessMessage("Đăng nhập thành công!");
       } else {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        if (cred.user) {
-          const token = await initNotifications(cred.user.uid).catch(() => null);
-          await syncLoginOrRegisterApi(cred.user, token, true);
-          await userProfileState.fetchProfile(cred.user.uid, cred.user.displayName);
-        }
+        await createUserWithEmailAndPassword(auth, email, password);
         setSuccessMessage("Đăng ký tài khoản thành công!");
       }
     } catch (err: any) {
@@ -98,12 +88,7 @@ export default function Auth() {
     setIsSubmitting(true);
 
     try {
-      const cred = await signInWithPopup(auth, googleProvider);
-      if (cred.user) {
-        const token = await initNotifications(cred.user.uid).catch(() => null);
-        await syncLoginOrRegisterApi(cred.user, token, false);
-        await userProfileState.fetchProfile(cred.user.uid, cred.user.displayName);
-      }
+      await signInWithPopup(auth, googleProvider);
       setSuccessMessage("Đăng nhập Google thành công!");
     } catch (err: any) {
       console.error(err);

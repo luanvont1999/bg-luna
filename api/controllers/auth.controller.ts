@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { saveOrUpdateUserOnLogin, removeUserFCMTokenOnLogout } from "../_models/user.model.js";
+import { saveOrUpdateUserOnLogin, removeUserFCMTokenOnLogout } from "../models/user.model.js";
 
 // POST /api/auth/login OR /api/auth/register
 export async function handleLoginOrRegister(req: Request, res: Response) {

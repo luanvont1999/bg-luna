@@ -32,10 +32,10 @@ export async function getAccessToken(): Promise<{ accessToken: string; projectId
   } else {
     const candidates = [
       process.env.FIREBASE_SERVICE_ACCOUNT_JSON_PATH,
-      path.resolve(process.cwd(), "bg-luna-prod-firebase-adminsdk-fbsvc-ceec9783dd.json"),
-      path.resolve(process.cwd(), "..", "bg-luna-prod-firebase-adminsdk-fbsvc-ceec9783dd.json"),
       path.resolve(process.cwd(), "firebase-service-account.json"),
       path.resolve(process.cwd(), "..", "firebase-service-account.json"),
+      path.resolve(process.cwd(), "bg-luna-prod-firebase-adminsdk-fbsvc-ceec9783dd.json"),
+      path.resolve(process.cwd(), "..", "bg-luna-prod-firebase-adminsdk-fbsvc-ceec9783dd.json"),
     ].filter(Boolean) as string[];
 
     let saPath = "";
