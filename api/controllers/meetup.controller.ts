@@ -78,6 +78,7 @@ export async function joinMeetup(req: Request, res: Response) {
 
     // 2. Add to meetup's pendingUids
     const meetup = await getFirestoreMeetup(meetupId);
+    if (!meetup.pendingUids) meetup.pendingUids = [];
     if (!meetup.pendingUids.includes(userUid)) {
       meetup.pendingUids.push(userUid);
     }
@@ -85,18 +86,23 @@ export async function joinMeetup(req: Request, res: Response) {
     await updateFirestoreMeetup(meetup, ["pendingUids"]);
 
     // 3. Send Notification to Host (Get token dynamically)
-    if (meetup.hostUID) {
-      const hostToken = await getUserFCMToken(meetup.hostUID);
-      if (hostToken) {
-        const countStr = pCount > 1 ? ` (${pCount} người)` : "";
-        const msgStr = msg ? ` - Lời nhắn: "${msg}"` : "";
-        const bodyText = `${userName}${countStr} muốn xin vào kèo "${meetup.title}" chơi game ${meetup.game} của bạn.${msgStr}`;
-        sendFCMNotification(
-          hostToken,
-          "🎯 Yêu cầu tham gia kèo mới!",
-          bodyText,
-          `/#/manage/${meetupId}`
-        ).catch((e) => console.error("FCM notify host failed:", e));
+    const hostUid = meetup.hostUID || (meetup as any).hostUid || (meetup as any).host_uid;
+    if (hostUid) {
+      try {
+        const hostToken = await getUserFCMToken(hostUid);
+        if (hostToken) {
+          const countStr = pCount > 1 ? ` (${pCount} người)` : "";
+          const msgStr = msg ? ` - Lời nhắn: "${msg}"` : "";
+          const bodyText = `${userName}${countStr} muốn xin vào kèo "${meetup.title}" chơi game ${meetup.game} của bạn.${msgStr}`;
+          await sendFCMNotification(
+            hostToken,
+            "🎯 Yêu cầu tham gia kèo mới!",
+            bodyText,
+            `/#/meetup-detail/${meetupId}`
+          );
+        }
+      } catch (e) {
+        console.error("[FCM Join] Notify host failed:", e);
       }
     }
 
@@ -134,16 +140,20 @@ export async function approveMember(req: Request, res: Response) {
     await updateFirestoreMeetup(meetup, ["approvedPendingUids", "pendingUids"]);
 
     // 3. Send Push Notification to Player (Get token dynamically)
-    const playerToken = await getUserFCMToken(playerUid);
-    if (playerToken) {
-      const host = meetup.hostName || "Host";
-      const bodyText = `Bạn đã được duyệt tham gia kèo "${meetup.title}" chơi game ${meetup.game} của ${host}! Hãy xác nhận tham gia kèo chính thức.`;
-      sendFCMNotification(
-        playerToken,
-        "🎉 Yêu cầu đã được duyệt!",
-        bodyText,
-        `/#/manage/${meetupId}`
-      ).catch((e) => console.error("FCM notify player failed:", e));
+    try {
+      const playerToken = await getUserFCMToken(playerUid);
+      if (playerToken) {
+        const host = meetup.hostName || "Host";
+        const bodyText = `Bạn đã được duyệt tham gia kèo "${meetup.title}" chơi game ${meetup.game} của ${host}! Hãy xác nhận tham gia kèo chính thức.`;
+        await sendFCMNotification(
+          playerToken,
+          "🎉 Yêu cầu đã được duyệt!",
+          bodyText,
+          `/#/meetup-detail/${meetupId}`
+        );
+      }
+    } catch (e) {
+      console.error("[FCM Approve] Notify player failed:", e);
     }
 
     res.json({
@@ -172,38 +182,45 @@ export async function confirmParticipation(req: Request, res: Response) {
     const addedSlots = reqData?.participantCount || 1;
 
     // 2. Transition from approvedPendingUids to approvedUids and increment player count by participantCount
-    meetup.approvedPendingUids = meetup.approvedPendingUids.filter((uid) => uid !== userUid);
+    meetup.approvedPendingUids = (meetup.approvedPendingUids || []).filter((uid) => uid !== userUid);
+    if (!meetup.approvedUids) meetup.approvedUids = [];
     if (!meetup.approvedUids.includes(userUid)) {
       meetup.approvedUids.push(userUid);
-      meetup.playersCount += addedSlots;
+      meetup.playersCount = (meetup.playersCount || 1) + addedSlots;
     }
 
     await updateFirestoreMeetup(meetup, ["approvedUids", "approvedPendingUids", "playersCount"]);
 
     // 3. Notify everyone else (approved members + host)
     const targets = new Set<string>();
-    for (const uid of meetup.approvedUids) {
+    for (const uid of meetup.approvedUids || []) {
       if (uid !== userUid) targets.add(uid);
     }
-    if (meetup.hostUID && meetup.hostUID !== userUid) {
-      targets.add(meetup.hostUID);
+    const hostUid = meetup.hostUID || (meetup as any).hostUid || (meetup as any).host_uid;
+    if (hostUid && hostUid !== userUid) {
+      targets.add(hostUid);
     }
 
     const countStr = addedSlots > 1 ? ` (${addedSlots} người)` : "";
     const bodyText = `${userName}${countStr} đã xác nhận tham gia kèo "${meetup.title}" chơi game ${meetup.game}.`;
-    for (const uid of targets) {
-      // Get token dynamically for each member
-      getUserFCMToken(uid).then((token) => {
-        if (token) {
-          sendFCMNotification(
-            token,
-            "➕ Kèo có thêm người chơi mới!",
-            bodyText,
-            `/#/manage/${meetupId}`
-          ).catch((e) => console.error("FCM notify confirmed user failed:", e));
+
+    await Promise.allSettled(
+      Array.from(targets).map(async (uid) => {
+        try {
+          const token = await getUserFCMToken(uid);
+          if (token) {
+            await sendFCMNotification(
+              token,
+              "➕ Kèo có thêm người chơi mới!",
+              bodyText,
+              `/#/meetup-detail/${meetupId}`
+            );
+          }
+        } catch (e) {
+          console.error(`FCM notify confirmed user ${uid} failed:`, e);
         }
-      }).catch((err) => console.error(`Failed to get FCM token for notifying user ${uid}:`, err));
-    }
+      })
+    );
 
     res.json({
       success: true,
@@ -241,7 +258,7 @@ export async function leaveOrKickMember(req: Request, res: Response) {
     meetup.approvedPendingUids = (meetup.approvedPendingUids || []).filter((uid) => uid !== playerUid);
 
     if (wasApproved) {
-      meetup.playersCount = Math.max(1, meetup.playersCount - removedSlots);
+      meetup.playersCount = Math.max(1, (meetup.playersCount || 1) - removedSlots);
     }
 
     await updateFirestoreMeetup(meetup, [
@@ -252,56 +269,74 @@ export async function leaveOrKickMember(req: Request, res: Response) {
     ]);
 
     // 3. Send notifications (Get tokens dynamically)
+    const hostUid = meetup.hostUID || (meetup as any).hostUid || (meetup as any).host_uid;
     if (isKick) {
       // Host kick player -> notify player
-      getUserFCMToken(playerUid).then((playerToken) => {
+      try {
+        const playerToken = await getUserFCMToken(playerUid);
         if (playerToken) {
           const bodyText = `Host đã xóa bạn khỏi danh sách tham gia kèo "${meetup.title}".`;
-          sendFCMNotification(playerToken, "✕ Bạn đã bị xóa khỏi kèo", bodyText, "/").catch((e) =>
-            console.error("FCM notify kicked player failed:", e)
-          );
+          await sendFCMNotification(playerToken, "✕ Bạn đã bị xóa khỏi kèo", bodyText, "/");
         }
-      }).catch((err) => console.error("Failed to get FCM token for kicked player:", err));
+      } catch (e) {
+        console.error("FCM notify kicked player failed:", e);
+      }
 
       // Notify other members
       const targets = new Set<string>();
-      for (const uid of meetup.approvedUids) {
+      for (const uid of meetup.approvedUids || []) {
         if (uid !== playerUid) targets.add(uid);
       }
-      if (meetup.hostUID && meetup.hostUID !== playerUid) {
-        targets.add(meetup.hostUID);
+      if (hostUid && hostUid !== playerUid) {
+        targets.add(hostUid);
       }
 
       const bodyText = `${playerName} đã không còn tham gia kèo "${meetup.title}".`;
-      for (const uid of targets) {
-        getUserFCMToken(uid).then((token) => {
-          if (token) {
-            sendFCMNotification(token, "👋 Thành viên đã rời kèo", bodyText, `/#/manage/${meetupId}`).catch(
-              (e) => console.error("FCM notify member left failed:", e)
-            );
+      await Promise.allSettled(
+        Array.from(targets).map(async (uid) => {
+          try {
+            const token = await getUserFCMToken(uid);
+            if (token) {
+              await sendFCMNotification(
+                token,
+                "👋 Thành viên đã rời kèo",
+                bodyText,
+                `/#/meetup-detail/${meetupId}`
+              );
+            }
+          } catch (e) {
+            console.error(`FCM notify member left failed:`, e);
           }
-        }).catch((err) => console.error(`Failed to get FCM token for notifying member ${uid}:`, err));
-      }
+        })
+      );
     } else {
       // Player left voluntarily -> notify host and other members
       const targets = new Set<string>();
-      for (const uid of meetup.approvedUids) {
+      for (const uid of meetup.approvedUids || []) {
         if (uid !== playerUid) targets.add(uid);
       }
-      if (meetup.hostUID && meetup.hostUID !== playerUid) {
-        targets.add(meetup.hostUID);
+      if (hostUid && hostUid !== playerUid) {
+        targets.add(hostUid);
       }
 
       const bodyText = `${playerName} đã rời khỏi kèo "${meetup.title}".`;
-      for (const uid of targets) {
-        getUserFCMToken(uid).then((token) => {
-          if (token) {
-            sendFCMNotification(token, "🚪 Thành viên rời kèo", bodyText, `/#/manage/${meetupId}`).catch(
-              (e) => console.error("FCM notify member left failed:", e)
-            );
+      await Promise.allSettled(
+        Array.from(targets).map(async (uid) => {
+          try {
+            const token = await getUserFCMToken(uid);
+            if (token) {
+              await sendFCMNotification(
+                token,
+                "🚪 Thành viên rời kèo",
+                bodyText,
+                `/#/meetup-detail/${meetupId}`
+              );
+            }
+          } catch (e) {
+            console.error(`FCM notify member left failed:`, e);
           }
-        }).catch((err) => console.error(`Failed to get FCM token for notifying member ${uid}:`, err));
-      }
+        })
+      );
     }
 
     res.json({

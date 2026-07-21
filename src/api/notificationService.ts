@@ -33,10 +33,19 @@ export async function initNotifications(userId: string, onForegroundNotification
     if (token) {
       console.log('[FCM] Lấy FCM Token thành công:', token);
       
-      // Lưu token vào document /users/{userId} trong Firestore
+      // Lưu token và thông tin cơ bản vào document /users/{userId} trong Firestore
       const userRef = doc(db, 'users', userId);
-      await setDoc(userRef, { fcmToken: token }, { merge: true });
+      const user = auth.currentUser;
+      const profileData: Record<string, any> = {
+        fcmToken: token,
+        updatedAt: new Date()
+      };
+      if (user?.displayName) profileData.displayName = user.displayName;
+      if (user?.email) profileData.email = user.email;
+
+      await setDoc(userRef, profileData, { merge: true });
       localStorage.setItem('fcmToken', token);
+      console.log('[FCM] Đã lưu fcmToken thành công vào Firestore cho user:', userId);
       
       // Lắng nghe thông báo khi app đang mở (Foreground)
       onMessage(messaging, (payload) => {

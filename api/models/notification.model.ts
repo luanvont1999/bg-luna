@@ -121,6 +121,7 @@ export async function sendFCMNotification(
       webpush: {
         headers: {
           Urgency: "high",
+          TTL: "86400",
         },
         notification: {
           title,
@@ -136,6 +137,7 @@ export async function sendFCMNotification(
       apns: {
         headers: {
           "apns-priority": "10",
+          "apns-push-type": "alert",
         },
         payload: {
           aps: {

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import Auth from "../components/Auth";
 import Icon from "../components/Icon";
-import { auth } from "../libs/firebase";
+import { auth, db } from "../libs/firebase";
 import { onAuthStateChanged, updateProfile, type User } from "firebase/auth";
+import { doc, updateDoc, deleteField } from "firebase/firestore";
 import { useUserProfile, userProfileState } from "../libs/userProfile";
+import { initNotifications } from "../api/notificationService";
 
 
 
@@ -52,12 +54,53 @@ export default function ProfileRoute({
     }
   }, [profile.loaded, profile.displayName, profile.bio, profile.favoriteCategories]);
 
+  // Notification toggle state
+  const [isNotifEnabled, setIsNotifEnabled] = useState<boolean>(false);
+  const [isNotifLoading, setIsNotifLoading] = useState<boolean>(false);
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-    });
-    return unsubscribe;
-  }, []);
+    if (currentUser) {
+      const hasToken = Boolean(localStorage.getItem("fcmToken"));
+      const isGranted = typeof Notification !== "undefined" && Notification.permission === "granted";
+      setIsNotifEnabled(hasToken && isGranted);
+    } else {
+      setIsNotifEnabled(false);
+    }
+  }, [currentUser]);
+
+  async function handleToggleNotification() {
+    if (!currentUser || isNotifLoading) return;
+    setIsNotifLoading(true);
+
+    try {
+      if (!isNotifEnabled) {
+        // Turn ON notification
+        const token = await initNotifications(currentUser.uid);
+        if (token) {
+          setIsNotifEnabled(true);
+          addToast("Đã bật thông báo đẩy thành công!", "success");
+        } else {
+          setIsNotifEnabled(false);
+          addToast("Không thể bật thông báo. Vui lòng kiểm tra quyền trên trình duyệt!", "error");
+        }
+      } else {
+        // Turn OFF notification
+        const userRef = doc(db, "users", currentUser.uid);
+        await updateDoc(userRef, {
+          fcmToken: deleteField(),
+        }).catch((err) => console.warn("Lỗi xoá FCM token:", err));
+
+        localStorage.removeItem("fcmToken");
+        setIsNotifEnabled(false);
+        addToast("Đã tắt nhận thông báo đẩy trên thiết bị này.", "info");
+      }
+    } catch (err: any) {
+      console.error("Lỗi toggle thông báo:", err);
+      addToast("Lỗi thay đổi trạng thái thông báo: " + err.message, "error");
+    } finally {
+      setIsNotifLoading(false);
+    }
+  }
 
   function toggleCategory(catId: string) {
     if (favoriteCategories.includes(catId)) {
@@ -167,6 +210,37 @@ export default function ProfileRoute({
                 rows={3}
                 className="p-3 font-semibold text-base rounded-md border-3 border-[#1e1e24] bg-white outline-none shadow-[3px_3px_0_#1e1e24] resize-y"
               ></textarea>
+            </div>
+
+            {/* Push Notification Toggle Switch */}
+            <div className="form-group flex items-center justify-between p-4 bg-[#fbf7ed] border-3 border-[#1e1e24] rounded-xl shadow-[3px_3px_0_#1e1e24] gap-4">
+              <div className="flex flex-col gap-1 text-left">
+                <span className="font-extrabold text-[0.98rem] text-[#1e1e24] flex items-center gap-2">
+                  <Icon name="bell" size={18} className="inline text-[#1e1e24]" /> Thông báo đẩy (Push Notifications)
+                </span>
+                <span className="text-xs font-bold text-[#646473]">
+                  {isNotifEnabled
+                    ? "Đang bật nhận thông báo về kèo mới, lời nhắn chat & cập nhật lượt chơi"
+                    : "Đã tắt. Bật lại để không bỏ lỡ thông báo từ nhóm chơi!"}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isNotifEnabled}
+                onClick={handleToggleNotification}
+                disabled={isNotifLoading}
+                className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-3 border-[#1e1e24] transition-colors duration-200 ease-in-out outline-none shadow-[2px_2px_0_#1e1e24] ${
+                  isNotifEnabled ? "bg-[#9ee3b2]" : "bg-[#e5e7eb]"
+                } ${isNotifLoading ? "opacity-60 cursor-not-allowed" : ""}`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-6 w-6 transform rounded-full border-2 border-[#1e1e24] shadow-md transition duration-200 ease-in-out mt-[1px] ${
+                    isNotifEnabled ? "translate-x-6 bg.pastelYellow bg-[#fef08a]" : "translate-x-0.5 bg-white"
+                  }`}
+                />
+              </button>
             </div>
 
             <div className="form-group flex flex-col gap-2">

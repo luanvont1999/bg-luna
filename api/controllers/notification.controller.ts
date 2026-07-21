@@ -28,17 +28,26 @@ export async function sendNotification(req: Request, res: Response) {
   const sendErrors: string[] = [];
   let successCount = 0;
 
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i];
-    const tokenHint = token.length > 15 ? token.substring(0, 15) + "..." : token;
-    try {
-      console.log(`[FCM Broadcast] [${i + 1}/${tokens.length}] Đang gửi tới: ${tokenHint}`);
-      await sendFCMNotification(token, title, bodyText, clickAction || "/");
-      console.log(`[FCM Broadcast] [${i + 1}/${tokens.length}] ✅ Gửi thành công tới: ${tokenHint}`);
+  const results = await Promise.allSettled(
+    tokens.map(async (token, i) => {
+      const tokenHint = token.length > 15 ? token.substring(0, 15) + "..." : token;
+      try {
+        console.log(`[FCM Broadcast] [${i + 1}/${tokens.length}] Đang gửi tới: ${tokenHint}`);
+        await sendFCMNotification(token, title, bodyText, clickAction || "/");
+        console.log(`[FCM Broadcast] [${i + 1}/${tokens.length}] ✅ Gửi thành công tới: ${tokenHint}`);
+        return tokenHint;
+      } catch (err: any) {
+        console.error(`[FCM Broadcast] [${i + 1}/${tokens.length}] ❌ Lỗi gửi tới ${tokenHint}:`, err.message);
+        throw new Error(`${tokenHint}: ${err.message}`);
+      }
+    })
+  );
+
+  for (const res of results) {
+    if (res.status === "fulfilled") {
       successCount++;
-    } catch (err: any) {
-      console.error(`[FCM Broadcast] [${i + 1}/${tokens.length}] ❌ Lỗi gửi tới ${tokenHint}:`, err.message);
-      sendErrors.push(`${tokenHint}: ${err.message}`);
+    } else {
+      sendErrors.push(res.reason?.message || "Lỗi gửi thông báo");
     }
   }
 

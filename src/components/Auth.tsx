@@ -13,6 +13,7 @@ import { doc, updateDoc, deleteField } from "firebase/firestore";
 import Icon from "./Icon";
 import { userProfileState } from "../libs/userProfile";
 import { translateError } from "../utils/error";
+import { initNotifications } from "../api/notificationService";
 
 export default function Auth() {
   const [user, setUser] = useState<User | null>(auth.currentUser);
@@ -69,12 +70,18 @@ export default function Auth() {
         const cred = await signInWithEmailAndPassword(auth, email, password);
         if (cred.user) {
           await userProfileState.fetchProfile(cred.user.uid, cred.user.displayName);
+          initNotifications(cred.user.uid).catch((err) =>
+            console.warn("Lỗi khởi tạo FCM Token khi đăng nhập email:", err)
+          );
         }
         setSuccessMessage("Đăng nhập thành công!");
       } else {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         if (cred.user) {
           await userProfileState.fetchProfile(cred.user.uid, cred.user.displayName);
+          initNotifications(cred.user.uid).catch((err) =>
+            console.warn("Lỗi khởi tạo FCM Token khi đăng ký email:", err)
+          );
         }
         setSuccessMessage("Đăng ký tài khoản thành công!");
       }
@@ -95,6 +102,9 @@ export default function Auth() {
       const cred = await signInWithPopup(auth, googleProvider);
       if (cred.user) {
         await userProfileState.fetchProfile(cred.user.uid, cred.user.displayName);
+        initNotifications(cred.user.uid).catch((err) =>
+          console.warn("Lỗi khởi tạo FCM Token khi đăng nhập Google:", err)
+        );
       }
       setSuccessMessage("Đăng nhập Google thành công!");
     } catch (err: any) {
