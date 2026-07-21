@@ -11,7 +11,7 @@ import {
   Meetup,
   getFirestoreAllMeetups,
 } from "../models/meetup.model.js";
-import { sendFCMNotification, getUserFCMToken } from "../models/notification.model.js";
+import { sendFCMNotification, getUserFCMToken, getUserFCMTokens } from "../models/notification.model.js";
 
 // GET /api/meetups
 export async function getAllMeetups(req: Request, res: Response) {
@@ -85,22 +85,24 @@ export async function joinMeetup(req: Request, res: Response) {
 
     await updateFirestoreMeetup(meetup, ["pendingUids"]);
 
-    // 3. Send Notification to Host (Get token dynamically)
+    // 3. Send Notification to Host (Get tokens dynamically)
     const hostUid = meetup.hostUID || (meetup as any).hostUid || (meetup as any).host_uid;
     if (hostUid) {
       try {
-        const hostToken = await getUserFCMToken(hostUid);
-        if (hostToken) {
-          const countStr = pCount > 1 ? ` (${pCount} người)` : "";
-          const msgStr = msg ? ` - Lời nhắn: "${msg}"` : "";
-          const bodyText = `${userName}${countStr} muốn xin vào kèo "${meetup.title}" chơi game ${meetup.game} của bạn.${msgStr}`;
-          await sendFCMNotification(
-            hostToken,
-            "🎯 Yêu cầu tham gia kèo mới!",
-            bodyText,
-            `/#/meetup-detail/${meetupId}`
-          );
-        }
+        const hostTokens = await getUserFCMTokens(hostUid);
+        const countStr = pCount > 1 ? ` (${pCount} người)` : "";
+        const msgStr = msg ? ` - Lời nhắn: "${msg}"` : "";
+        const bodyText = `${userName}${countStr} muốn xin vào kèo "${meetup.title}" chơi game ${meetup.game} của bạn.${msgStr}`;
+        await Promise.allSettled(
+          hostTokens.map((token) =>
+            sendFCMNotification(
+              token,
+              "🎯 Yêu cầu tham gia kèo mới!",
+              bodyText,
+              `/#/meetup-detail/${meetupId}`
+            )
+          )
+        );
       } catch (e) {
         console.error("[FCM Join] Notify host failed:", e);
       }
@@ -139,19 +141,21 @@ export async function approveMember(req: Request, res: Response) {
 
     await updateFirestoreMeetup(meetup, ["approvedPendingUids", "pendingUids"]);
 
-    // 3. Send Push Notification to Player (Get token dynamically)
+    // 3. Send Push Notification to Player (Get tokens dynamically)
     try {
-      const playerToken = await getUserFCMToken(playerUid);
-      if (playerToken) {
-        const host = meetup.hostName || "Host";
-        const bodyText = `Bạn đã được duyệt tham gia kèo "${meetup.title}" chơi game ${meetup.game} của ${host}! Hãy xác nhận tham gia kèo chính thức.`;
-        await sendFCMNotification(
-          playerToken,
-          "🎉 Yêu cầu đã được duyệt!",
-          bodyText,
-          `/#/meetup-detail/${meetupId}`
-        );
-      }
+      const playerTokens = await getUserFCMTokens(playerUid);
+      const host = meetup.hostName || "Host";
+      const bodyText = `Bạn đã được duyệt tham gia kèo "${meetup.title}" chơi game ${meetup.game} của ${host}! Hãy xác nhận tham gia kèo chính thức.`;
+      await Promise.allSettled(
+        playerTokens.map((token) =>
+          sendFCMNotification(
+            token,
+            "🎉 Yêu cầu đã được duyệt!",
+            bodyText,
+            `/#/meetup-detail/${meetupId}`
+          )
+        )
+      );
     } catch (e) {
       console.error("[FCM Approve] Notify player failed:", e);
     }
@@ -207,15 +211,17 @@ export async function confirmParticipation(req: Request, res: Response) {
     await Promise.allSettled(
       Array.from(targets).map(async (uid) => {
         try {
-          const token = await getUserFCMToken(uid);
-          if (token) {
-            await sendFCMNotification(
-              token,
-              "➕ Kèo có thêm người chơi mới!",
-              bodyText,
-              `/#/meetup-detail/${meetupId}`
-            );
-          }
+          const tokens = await getUserFCMTokens(uid);
+          await Promise.allSettled(
+            tokens.map((token) =>
+              sendFCMNotification(
+                token,
+                "➕ Kèo có thêm người chơi mới!",
+                bodyText,
+                `/#/meetup-detail/${meetupId}`
+              )
+            )
+          );
         } catch (e) {
           console.error(`FCM notify confirmed user ${uid} failed:`, e);
         }
@@ -273,11 +279,11 @@ export async function leaveOrKickMember(req: Request, res: Response) {
     if (isKick) {
       // Host kick player -> notify player
       try {
-        const playerToken = await getUserFCMToken(playerUid);
-        if (playerToken) {
-          const bodyText = `Host đã xóa bạn khỏi danh sách tham gia kèo "${meetup.title}".`;
-          await sendFCMNotification(playerToken, "✕ Bạn đã bị xóa khỏi kèo", bodyText, "/");
-        }
+        const playerTokens = await getUserFCMTokens(playerUid);
+        const bodyText = `Host đã xóa bạn khỏi danh sách tham gia kèo "${meetup.title}".`;
+        await Promise.allSettled(
+          playerTokens.map((token) => sendFCMNotification(token, "✕ Bạn đã bị xóa khỏi kèo", bodyText, "/"))
+        );
       } catch (e) {
         console.error("FCM notify kicked player failed:", e);
       }
@@ -295,15 +301,17 @@ export async function leaveOrKickMember(req: Request, res: Response) {
       await Promise.allSettled(
         Array.from(targets).map(async (uid) => {
           try {
-            const token = await getUserFCMToken(uid);
-            if (token) {
-              await sendFCMNotification(
-                token,
-                "👋 Thành viên đã rời kèo",
-                bodyText,
-                `/#/meetup-detail/${meetupId}`
-              );
-            }
+            const tokens = await getUserFCMTokens(uid);
+            await Promise.allSettled(
+              tokens.map((token) =>
+                sendFCMNotification(
+                  token,
+                  "👋 Thành viên đã rời kèo",
+                  bodyText,
+                  `/#/meetup-detail/${meetupId}`
+                )
+              )
+            );
           } catch (e) {
             console.error(`FCM notify member left failed:`, e);
           }
@@ -323,15 +331,17 @@ export async function leaveOrKickMember(req: Request, res: Response) {
       await Promise.allSettled(
         Array.from(targets).map(async (uid) => {
           try {
-            const token = await getUserFCMToken(uid);
-            if (token) {
-              await sendFCMNotification(
-                token,
-                "🚪 Thành viên rời kèo",
-                bodyText,
-                `/#/meetup-detail/${meetupId}`
-              );
-            }
+            const tokens = await getUserFCMTokens(uid);
+            await Promise.allSettled(
+              tokens.map((token) =>
+                sendFCMNotification(
+                  token,
+                  "🚪 Thành viên rời kèo",
+                  bodyText,
+                  `/#/meetup-detail/${meetupId}`
+                )
+              )
+            );
           } catch (e) {
             console.error(`FCM notify member left failed:`, e);
           }

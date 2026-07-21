@@ -13,7 +13,8 @@ import { doc, updateDoc, deleteField } from "firebase/firestore";
 import Icon from "./Icon";
 import { userProfileState } from "../libs/userProfile";
 import { translateError } from "../utils/error";
-import { initNotifications } from "../api/notificationService";
+import { initNotifications, removeNotificationToken } from "../api/notificationService";
+import { syncLoginOrRegisterApi, syncLogoutApi } from "../api/authService";
 
 export default function Auth() {
   const [user, setUser] = useState<User | null>(auth.currentUser);
@@ -69,19 +70,17 @@ export default function Auth() {
       if (isLoginMode) {
         const cred = await signInWithEmailAndPassword(auth, email, password);
         if (cred.user) {
+          const token = await initNotifications(cred.user.uid).catch(() => null);
+          await syncLoginOrRegisterApi(cred.user, token, false);
           await userProfileState.fetchProfile(cred.user.uid, cred.user.displayName);
-          initNotifications(cred.user.uid).catch((err) =>
-            console.warn("Lỗi khởi tạo FCM Token khi đăng nhập email:", err)
-          );
         }
         setSuccessMessage("Đăng nhập thành công!");
       } else {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         if (cred.user) {
+          const token = await initNotifications(cred.user.uid).catch(() => null);
+          await syncLoginOrRegisterApi(cred.user, token, true);
           await userProfileState.fetchProfile(cred.user.uid, cred.user.displayName);
-          initNotifications(cred.user.uid).catch((err) =>
-            console.warn("Lỗi khởi tạo FCM Token khi đăng ký email:", err)
-          );
         }
         setSuccessMessage("Đăng ký tài khoản thành công!");
       }
@@ -101,10 +100,9 @@ export default function Auth() {
     try {
       const cred = await signInWithPopup(auth, googleProvider);
       if (cred.user) {
+        const token = await initNotifications(cred.user.uid).catch(() => null);
+        await syncLoginOrRegisterApi(cred.user, token, false);
         await userProfileState.fetchProfile(cred.user.uid, cred.user.displayName);
-        initNotifications(cred.user.uid).catch((err) =>
-          console.warn("Lỗi khởi tạo FCM Token khi đăng nhập Google:", err)
-        );
       }
       setSuccessMessage("Đăng nhập Google thành công!");
     } catch (err: any) {
@@ -121,12 +119,12 @@ export default function Auth() {
     try {
       const currentUser = auth.currentUser;
       if (currentUser) {
-        const userRef = doc(db, 'users', currentUser.uid);
-        await updateDoc(userRef, {
-          fcmToken: deleteField()
-        }).catch(err => console.warn("Lỗi xoá FCM Token khi đăng xuất:", err));
+        const token = localStorage.getItem("fcmToken");
+        await syncLogoutApi(currentUser.uid, token);
+        await removeNotificationToken(currentUser.uid);
+      } else {
+        localStorage.removeItem('fcmToken');
       }
-      localStorage.removeItem('fcmToken');
 
       await signOut(auth);
       setSuccessMessage("Đã đăng xuất thành công.");

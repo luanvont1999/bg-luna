@@ -5,7 +5,7 @@ import { auth, db } from "../libs/firebase";
 import { onAuthStateChanged, updateProfile, type User } from "firebase/auth";
 import { doc, updateDoc, deleteField } from "firebase/firestore";
 import { useUserProfile, userProfileState } from "../libs/userProfile";
-import { initNotifications } from "../api/notificationService";
+import { initNotifications, removeNotificationToken } from "../api/notificationService";
 
 
 
@@ -85,12 +85,7 @@ export default function ProfileRoute({
         }
       } else {
         // Turn OFF notification
-        const userRef = doc(db, "users", currentUser.uid);
-        await updateDoc(userRef, {
-          fcmToken: deleteField(),
-        }).catch((err) => console.warn("Lỗi xoá FCM token:", err));
-
-        localStorage.removeItem("fcmToken");
+        await removeNotificationToken(currentUser.uid);
         setIsNotifEnabled(false);
         addToast("Đã tắt nhận thông báo đẩy trên thiết bị này.", "info");
       }

@@ -4,6 +4,7 @@ import cors from "cors";
 import healthRouter from "./routes/health.routes.js";
 import meetupRouter from "./routes/meetup.routes.js";
 import notificationRouter from "./routes/notification.routes.js";
+import authRouter from "./routes/auth.routes.js";
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use(healthRouter);
 app.use(meetupRouter);
 app.use(notificationRouter);
+app.use(authRouter);
 
 // Start the Node HTTP server only when running locally (outside Vercel)
 if (!process.env.VERCEL) {

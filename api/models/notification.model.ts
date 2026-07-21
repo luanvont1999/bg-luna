@@ -30,13 +30,20 @@ export async function getAccessToken(): Promise<{ accessToken: string; projectId
       throw new Error(`Lỗi parse service account từ env: ${err.message}`);
     }
   } else {
-    let saPath = process.env.FIREBASE_SERVICE_ACCOUNT_JSON_PATH || "firebase-service-account.json";
-    if (!path.isAbsolute(saPath)) {
-      saPath = path.resolve(process.cwd(), "..", saPath);
-    }
+    const candidates = [
+      process.env.FIREBASE_SERVICE_ACCOUNT_JSON_PATH,
+      path.resolve(process.cwd(), "bg-luna-prod-firebase-adminsdk-fbsvc-ceec9783dd.json"),
+      path.resolve(process.cwd(), "..", "bg-luna-prod-firebase-adminsdk-fbsvc-ceec9783dd.json"),
+      path.resolve(process.cwd(), "firebase-service-account.json"),
+      path.resolve(process.cwd(), "..", "firebase-service-account.json"),
+    ].filter(Boolean) as string[];
 
-    if (!fs.existsSync(saPath)) {
-      saPath = path.resolve(process.cwd(), "firebase-service-account.json");
+    let saPath = "";
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        saPath = p;
+        break;
+      }
     }
 
     try {
@@ -169,7 +176,7 @@ export async function sendFCMNotification(
   }
 }
 
-export async function getUserFCMToken(uid: string): Promise<string | null> {
+export async function getUserFCMTokens(uid: string): Promise<string[]> {
   try {
     const { accessToken, projectId } = await getAccessToken();
     const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${uid}`;
@@ -184,21 +191,31 @@ export async function getUserFCMToken(uid: string): Promise<string | null> {
 
     clearTimeout(timeoutId);
 
-    if (res.status === 404) {
-      return null;
-    }
-
-    if (!res.ok) {
-      const text = await res.text();
-      console.warn(`[FCM User Token] Failed to fetch token for user ${uid}: ${res.status} - ${text}`);
-      return null;
+    if (res.status === 404 || !res.ok) {
+      return [];
     }
 
     const data = await res.json();
-    const fcmToken = data.fields?.fcmToken?.stringValue || null;
-    return fcmToken;
+    const tokensSet = new Set<string>();
+
+    // 1. Multi-device tokens array
+    const arrayVals = data.fields?.fcmTokens?.arrayValue?.values || [];
+    for (const item of arrayVals) {
+      if (item.stringValue) tokensSet.add(item.stringValue);
+    }
+
+    // 2. Legacy single token fallback
+    const singleToken = data.fields?.fcmToken?.stringValue;
+    if (singleToken) tokensSet.add(singleToken);
+
+    return Array.from(tokensSet);
   } catch (err: any) {
-    console.error(`[FCM User Token Error] Failed to get token for user ${uid}:`, err.message);
-    return null;
+    console.error(`[FCM User Token Error] Failed to get tokens for user ${uid}:`, err.message);
+    return [];
   }
+}
+
+export async function getUserFCMToken(uid: string): Promise<string | null> {
+  const tokens = await getUserFCMTokens(uid);
+  return tokens.length > 0 ? tokens[0] : null;
 }

@@ -1,12 +1,12 @@
-import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
-import { getToken, onMessage } from 'firebase/messaging';
-import { db, messaging } from '../libs/firebase';
+import { doc, getDoc, setDoc, updateDoc, deleteField, arrayUnion, arrayRemove, collection, getDocs } from 'firebase/firestore';
+import { getToken, deleteToken, onMessage } from 'firebase/messaging';
+import { db, messaging, auth } from '../libs/firebase';
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
 
 /**
  * Xin quyền thông báo đẩy và lấy FCM Token của thiết bị.
- * Lưu token này vào Firestore của user tại `/users/{userId}`.
+ * Lưu token này vào mảng `fcmTokens` của user tại `/users/{userId}` trên Firestore.
  */
 export async function initNotifications(userId: string, onForegroundNotification?: (payload: any) => void) {
   if (!messaging) {
@@ -33,10 +33,11 @@ export async function initNotifications(userId: string, onForegroundNotification
     if (token) {
       console.log('[FCM] Lấy FCM Token thành công:', token);
       
-      // Lưu token và thông tin cơ bản vào document /users/{userId} trong Firestore
+      // Lưu token vào mảng fcmTokens trong document /users/{userId}
       const userRef = doc(db, 'users', userId);
       const user = auth.currentUser;
       const profileData: Record<string, any> = {
+        fcmTokens: arrayUnion(token),
         fcmToken: token,
         updatedAt: new Date()
       };
@@ -45,7 +46,7 @@ export async function initNotifications(userId: string, onForegroundNotification
 
       await setDoc(userRef, profileData, { merge: true });
       localStorage.setItem('fcmToken', token);
-      console.log('[FCM] Đã lưu fcmToken thành công vào Firestore cho user:', userId);
+      console.log('[FCM] Đã thêm fcmToken vào mảng thiết bị cho user:', userId);
       
       // Lắng nghe thông báo khi app đang mở (Foreground)
       onMessage(messaging, (payload) => {
@@ -65,6 +66,45 @@ export async function initNotifications(userId: string, onForegroundNotification
     return null;
   }
 }
+
+/**
+ * Xóa FCM Token của thiết bị hiện tại khỏi mảng `fcmTokens` trên Firestore và hủy Token trên Firebase Messaging khi đăng xuất hoặc tắt thông báo.
+ */
+export async function removeNotificationToken(userId: string) {
+  const currentToken = localStorage.getItem('fcmToken');
+
+  try {
+    if (messaging) {
+      await deleteToken(messaging).catch((err) =>
+        console.warn('[FCM] Lỗi deleteToken từ Firebase Messaging:', err)
+      );
+    }
+  } catch (err) {
+    console.warn('[FCM] Unregister token error:', err);
+  }
+
+  if (userId) {
+    try {
+      const userRef = doc(db, 'users', userId);
+      if (currentToken) {
+        await updateDoc(userRef, {
+          fcmTokens: arrayRemove(currentToken),
+          fcmToken: deleteField()
+        });
+      } else {
+        await updateDoc(userRef, {
+          fcmToken: deleteField()
+        });
+      }
+      console.log(`[FCM] Đã xóa fcmToken của thiết bị cho user ${userId} trên Firestore.`);
+    } catch (err) {
+      console.warn('[FCM] Lỗi xóa fcmToken trên Firestore:', err);
+    }
+  }
+
+  localStorage.removeItem('fcmToken');
+}
+
 
 /**
  * Gửi thông báo đẩy bằng cách gọi API Proxy của Backend Go.
@@ -99,14 +139,21 @@ export async function broadcastPushNotifications(title: string, body: string, cl
   console.log('[FCM Frontend Broadcast] Bắt đầu quét Firestore tìm FCM Tokens...');
   try {
     const querySnapshot = await getDocs(collection(db, 'users'));
-    const tokens: string[] = [];
+    const tokensSet = new Set<string>();
     
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      if (data && data.fcmToken) {
-        tokens.push(data.fcmToken);
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (data) {
+        if (Array.isArray(data.fcmTokens)) {
+          data.fcmTokens.forEach((t: string) => t && tokensSet.add(t));
+        }
+        if (data.fcmToken) {
+          tokensSet.add(data.fcmToken);
+        }
       }
     });
+
+    const tokens = Array.from(tokensSet);
 
     console.log(`[FCM Frontend Broadcast] Đã quét xong. Tìm thấy tổng cộng ${querySnapshot.size} tài khoản, trong đó có ${tokens.length} tài khoản đăng ký FCM Token.`);
 

@@ -23,13 +23,22 @@ async function main() {
   console.log(`🔗 Link: "${clickAction}"`);
   console.log("====================================================\n");
 
-  let saPath = path.resolve(process.cwd(), "firebase-service-account.json");
-  if (!fs.existsSync(saPath)) {
-    saPath = path.resolve(process.cwd(), "firebase-service-account-bk.json");
+  const candidates = [
+    path.resolve(process.cwd(), "bg-luna-prod-firebase-adminsdk-fbsvc-ceec9783dd.json"),
+    path.resolve(process.cwd(), "firebase-service-account.json"),
+    path.resolve(process.cwd(), "firebase-service-account-bk.json"),
+  ];
+
+  let saPath = "";
+  for (const p of candidates) {
+    if (fs.existsSync(p)) {
+      saPath = p;
+      break;
+    }
   }
 
-  if (!fs.existsSync(saPath)) {
-    console.error("❌ Không tìm thấy file firebase-service-account.json!");
+  if (!saPath) {
+    console.error("❌ Không tìm thấy file Firebase service account json!");
     process.exit(1);
   }
 
@@ -68,7 +77,7 @@ async function main() {
   console.log(`✅ OAuth Access Token sẵn sàng. Firebase Project: ${projectId}`);
 
   // 2. Fetch all users from Firestore
-  const usersUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users`;
+  const usersUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users?pageSize=300`;
   const usersRes = await fetch(usersUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -84,14 +93,22 @@ async function main() {
 
   const targets: { name: string; token: string }[] = [];
   for (const doc of docs) {
-    const fcmToken = doc.fields?.fcmToken?.stringValue;
     const name = doc.fields?.displayName?.stringValue || doc.name.split("/").pop();
-    if (fcmToken) {
-      targets.push({ name, token: fcmToken });
+    const userTokensSet = new Set<string>();
+
+    const arrayVals = doc.fields?.fcmTokens?.arrayValue?.values || [];
+    for (const item of arrayVals) {
+      if (item.stringValue) userTokensSet.add(item.stringValue);
+    }
+    const singleToken = doc.fields?.fcmToken?.stringValue;
+    if (singleToken) userTokensSet.add(singleToken);
+
+    for (const token of userTokensSet) {
+      targets.push({ name, token });
     }
   }
 
-  console.log(`🔍 Tìm thấy ${docs.length} tài khoản trong hệ thống. Đã đăng ký FCM Token: ${targets.length}\n`);
+  console.log(`🔍 Tìm thấy ${docs.length} tài khoản trong hệ thống. Đã đăng ký ${targets.length} FCM Tokens (multi-device).\n`);
 
   if (targets.length === 0) {
     console.warn("⚠️ Không có thiết bị nào có đăng ký FCM Token!");
