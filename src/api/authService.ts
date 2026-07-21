@@ -13,9 +13,10 @@ export async function syncLoginOrRegisterApi(
   fcmToken?: string | null,
   isRegister: boolean = false
 ) {
-  const token = fcmToken || localStorage.getItem("fcmToken") || "";
+  // Chỉ sử dụng fcmToken mới được truyền vào, tuyệt đối không tự lấy token cũ trong localStorage để tránh bị trùng 2 token
+  const token = fcmToken || "";
   
-  // 1. Tạo hoặc cập nhật trực tiếp Firestore từ Client SDK để chắc chắn có record ngay lập tức
+  // 1. Tạo hoặc cập nhật trực tiếp Firestore từ Client SDK để chắc chắn có record user ngay lập tức
   try {
     const userRef = doc(db, 'users', user.uid);
     const userSnap = await getDoc(userRef);
@@ -26,7 +27,7 @@ export async function syncLoginOrRegisterApi(
       email: user.email || "",
       displayName,
       photoURL: user.photoURL || "",
-      fcmToken: deleteField(), // Xóa field fcmToken cũ bị duplicate
+      fcmToken: deleteField(), // Xóa field fcmToken đơn cũ nếu còn
       updatedAt: new Date()
     };
 
