@@ -33,12 +33,12 @@ export async function initNotifications(userId: string, onForegroundNotification
     if (token) {
       console.log('[FCM] Lấy FCM Token thành công:', token);
       
-      // Lưu token vào mảng fcmTokens trong document /users/{userId}
+      // Lưu token vào mảng fcmTokens trong document /users/{userId} và xóa fcmToken đơn cũ
       const userRef = doc(db, 'users', userId);
       const user = auth.currentUser;
       const profileData: Record<string, any> = {
         fcmTokens: arrayUnion(token),
-        fcmToken: token,
+        fcmToken: deleteField(),
         updatedAt: new Date()
       };
       if (user?.displayName) profileData.displayName = user.displayName;
@@ -204,16 +204,19 @@ export async function notifyMeetupChatMembers(
     const tokenPromises = targetUids.map(async (uid) => {
       try {
         const userDoc = await getDoc(doc(db, 'users', uid));
-        if (userDoc.exists() && userDoc.data()?.fcmToken) {
-          return userDoc.data().fcmToken as string;
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          if (Array.isArray(data.fcmTokens)) return data.fcmTokens as string[];
+          if (data.fcmToken) return [data.fcmToken as string];
         }
       } catch (e) {
         console.warn(`[FCM Chat] Failed to fetch token for user ${uid}:`, e);
       }
-      return null;
+      return [];
     });
 
-    const tokens = (await Promise.all(tokenPromises)).filter((t): t is string => Boolean(t));
+    const tokensNested = await Promise.all(tokenPromises);
+    const tokens = tokensNested.flat().filter(Boolean);
     if (tokens.length === 0) return;
 
     const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_URL || '') : '';
@@ -230,7 +233,7 @@ export async function notifyMeetupChatMembers(
         clickAction: `/#/chat/${meetupId}`
       })
     });
-    console.log(`[FCM Chat Notification] Sent notification to ${tokens.length} members.`);
+    console.log(`[FCM Chat Notification] Sent notification to ${tokens.length} device tokens.`);
   } catch (err) {
     console.error('[FCM Chat Notification Error]:', err);
   }
@@ -253,16 +256,19 @@ export async function notifyMeetupCancellation(
     const tokenPromises = targetUids.map(async (uid) => {
       try {
         const userDoc = await getDoc(doc(db, 'users', uid));
-        if (userDoc.exists() && userDoc.data()?.fcmToken) {
-          return userDoc.data().fcmToken as string;
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          if (Array.isArray(data.fcmTokens)) return data.fcmTokens as string[];
+          if (data.fcmToken) return [data.fcmToken as string];
         }
       } catch (e) {
         console.warn(`[FCM Cancellation] Failed to fetch token for user ${uid}:`, e);
       }
-      return null;
+      return [];
     });
 
-    const tokens = (await Promise.all(tokenPromises)).filter((t): t is string => Boolean(t));
+    const tokensNested = await Promise.all(tokenPromises);
+    const tokens = tokensNested.flat().filter(Boolean);
     if (tokens.length === 0) return;
 
     const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_URL || '') : '';

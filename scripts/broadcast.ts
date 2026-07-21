@@ -24,9 +24,9 @@ async function main() {
   console.log("====================================================\n");
 
   const candidates = [
-    path.resolve(process.cwd(), "bg-luna-prod-firebase-adminsdk-fbsvc-ceec9783dd.json"),
+    // path.resolve(process.cwd(), "bg-luna-prod-firebase-adminsdk-fbsvc-ceec9783dd.json"),
     path.resolve(process.cwd(), "firebase-service-account.json"),
-    path.resolve(process.cwd(), "firebase-service-account-bk.json"),
+    // path.resolve(process.cwd(), "firebase-service-account-bk.json"),
   ];
 
   let saPath = "";

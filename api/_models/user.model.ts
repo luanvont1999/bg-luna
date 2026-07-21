@@ -9,7 +9,6 @@ export interface UserDocumentData {
   bio?: string;
   favoriteCategories?: string[];
   fcmTokens: string[];
-  fcmToken?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -67,7 +66,6 @@ export async function getFirestoreUser(uid: string): Promise<UserDocumentData | 
       bio: fields.bio?.stringValue || "",
       favoriteCategories,
       fcmTokens: Array.from(tokensSet),
-      fcmToken: fields.fcmToken?.stringValue || "",
     };
   } catch (err: any) {
     console.error(`[User Model Error] Failed to fetch user ${uid}:`, err.message);
@@ -97,8 +95,9 @@ export async function saveOrUpdateUserOnLogin(data: {
   }
   const updatedTokens = Array.from(tokensSet);
 
-  const updatedDisplayName = displayName || existingUser?.displayName || "";
   const updatedEmail = email || existingUser?.email || "";
+  const updatedDisplayName =
+    displayName || existingUser?.displayName || (updatedEmail ? updatedEmail.split("@")[0] : "Thành viên");
   const updatedPhotoUrl = photoURL || existingUser?.photoURL || "";
 
   const fields: Record<string, FirestoreField> = {
@@ -111,7 +110,6 @@ export async function saveOrUpdateUserOnLogin(data: {
         values: updatedTokens.map((t) => ({ stringValue: t })),
       },
     },
-    fcmToken: { stringValue: fcmToken || existingUser?.fcmToken || "" },
     updatedAt: { stringValue: nowStr },
   };
 
@@ -128,7 +126,7 @@ export async function saveOrUpdateUserOnLogin(data: {
     }
   }
 
-  const updateMask = ["displayName", "email", "photoURL", "fcmTokens", "fcmToken", "updatedAt"];
+  const updateMask = ["displayName", "email", "photoURL", "fcmTokens", "updatedAt"];
   if (!existingUser) updateMask.push("uid", "createdAt");
 
   const queryParams = updateMask.map((p) => `updateMask.fieldPaths=${encodeURIComponent(p)}`).join("&");
@@ -156,7 +154,6 @@ export async function saveOrUpdateUserOnLogin(data: {
     displayName: updatedDisplayName,
     photoURL: updatedPhotoUrl,
     fcmTokens: updatedTokens,
-    fcmToken: fcmToken || existingUser?.fcmToken || "",
   };
 }
 
@@ -189,14 +186,7 @@ export async function removeUserFCMTokenOnLogout(uid: string, fcmToken?: string)
     updatedAt: { stringValue: nowStr },
   };
 
-  // If single legacy fcmToken matched removed token, clear it
-  if (existingUser.fcmToken === tokenToRemove) {
-    fields.fcmToken = { stringValue: "" };
-  } else {
-    fields.fcmToken = { stringValue: existingUser.fcmToken || "" };
-  }
-
-  const updateMask = ["fcmTokens", "fcmToken", "updatedAt"];
+  const updateMask = ["fcmTokens", "updatedAt"];
   const queryParams = updateMask.map((p) => `updateMask.fieldPaths=${encodeURIComponent(p)}`).join("&");
   const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${uid}?${queryParams}`;
 

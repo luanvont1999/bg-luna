@@ -1,15 +1,53 @@
 import { User } from "firebase/auth";
+import { doc, getDoc, setDoc, arrayUnion, deleteField } from "firebase/firestore";
+import { db } from "../libs/firebase";
 
 const API_BASE = import.meta.env.DEV ? (import.meta.env.VITE_API_URL || "") : "";
 
 /**
- * Gọi API Backend POST /api/auth/login (hoặc /register) gửi kèm thông tin User và fcmToken thiết bị.
+ * Gọi API Backend POST /api/auth/login (hoặc /register) gửi kèm thông tin User và fcmToken thiết bị,
+ * đồng thời tạo ngay lập tức document /users/{userId} trên Firestore.
  */
 export async function syncLoginOrRegisterApi(
   user: User,
   fcmToken?: string | null,
   isRegister: boolean = false
 ) {
+  const token = fcmToken || localStorage.getItem("fcmToken") || "";
+  
+  // 1. Tạo hoặc cập nhật trực tiếp Firestore từ Client SDK để chắc chắn có record ngay lập tức
+  try {
+    const userRef = doc(db, 'users', user.uid);
+    const userSnap = await getDoc(userRef);
+    
+    const displayName = user.displayName || (user.email ? user.email.split('@')[0] : "Thành viên");
+    const updateData: Record<string, any> = {
+      uid: user.uid,
+      email: user.email || "",
+      displayName,
+      photoURL: user.photoURL || "",
+      fcmToken: deleteField(), // Xóa field fcmToken cũ bị duplicate
+      updatedAt: new Date()
+    };
+
+    if (token) {
+      updateData.fcmTokens = arrayUnion(token);
+    }
+
+    if (!userSnap.exists()) {
+      updateData.createdAt = new Date();
+      updateData.bio = "";
+      updateData.favoriteCategories = [];
+      if (!updateData.fcmTokens) updateData.fcmTokens = token ? [token] : [];
+    }
+
+    await setDoc(userRef, updateData, { merge: true });
+    console.log(`[Auth Client Sync] ✅ Đã lưu/cập nhật user ${user.uid} lên Firestore.`);
+  } catch (err: any) {
+    console.warn(`[Auth Client Sync Warning] Firestore update failed:`, err.message);
+  }
+
+  // 2. Gọi API Backend proxy
   const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
   try {
     const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -22,7 +60,7 @@ export async function syncLoginOrRegisterApi(
         email: user.email || "",
         displayName: user.displayName || "",
         photoURL: user.photoURL || "",
-        fcmToken: fcmToken || localStorage.getItem("fcmToken") || "",
+        fcmToken: token,
       }),
     });
 
