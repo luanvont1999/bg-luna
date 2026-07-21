@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { sendFCMNotification } from "../models/notification.model.js";
+import { sendFCMNotification } from "../_models/notification.model.js";
 
 export async function sendNotification(req: Request, res: Response) {
   const body = req.body;

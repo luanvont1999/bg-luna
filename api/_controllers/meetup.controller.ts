@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { FirebaseUser } from "../middleware/auth.js";
+import { FirebaseUser } from "../_middleware/auth.js";
 import {
   meetupStore,
   getFirestoreMeetup,
@@ -10,8 +10,8 @@ import {
   deleteFirestoreRequest,
   Meetup,
   getFirestoreAllMeetups,
-} from "../models/meetup.model.js";
-import { sendFCMNotification, getUserFCMToken, getUserFCMTokens } from "../models/notification.model.js";
+} from "../_models/meetup.model.js";
+import { sendFCMNotification, getUserFCMToken, getUserFCMTokens } from "../_models/notification.model.js";
 
 // GET /api/meetups
 export async function getAllMeetups(req: Request, res: Response) {

@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors";
 
-import healthRouter from "./routes/health.routes.js";
-import meetupRouter from "./routes/meetup.routes.js";
-import notificationRouter from "./routes/notification.routes.js";
-import authRouter from "./routes/auth.routes.js";
+import healthRouter from "./_routes/health.routes.js";
+import meetupRouter from "./_routes/meetup.routes.js";
+import notificationRouter from "./_routes/notification.routes.js";
+import authRouter from "./_routes/auth.routes.js";
 
 const app = express();
 

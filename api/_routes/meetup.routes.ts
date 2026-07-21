@@ -6,8 +6,8 @@ import {
   approveMember,
   confirmParticipation,
   leaveOrKickMember,
-} from "../controllers/meetup.controller.js";
-import { authMiddleware } from "../middleware/auth.js";
+} from "../_controllers/meetup.controller.js";
+import { authMiddleware } from "../_middleware/auth.js";
 
 const router = Router();
 
